@@ -1,0 +1,32 @@
+HƯỚNG DẪN ĐƯA APP BÁN HÀNG LÊN MẠNG (MIỄN PHÍ)
+
+Thư mục này gồm: index.html (app), manifest.webmanifest, sw.js (giúp chạy offline), các file icon.
+Hãy giữ nguyên cả thư mục, không đổi tên file.
+
+CÁCH 1 - Netlify (dễ nhất, không cần code)
+1. Vào app.netlify.com/drop (đăng ký tài khoản miễn phí).
+2. Giải nén file zip, kéo cả thư mục vào khung "Drag and drop".
+3. Netlify cho bạn một link dạng xxxx.netlify.app. Đổi tên link trong phần Site settings nếu muốn.
+
+CÁCH 2 - Cloudflare Pages
+1. Vào dash.cloudflare.com > Workers & Pages > Create > Pages > Upload assets.
+2. Đặt tên dự án, tải thư mục lên, bấm Deploy.
+
+CÀI LÊN IPHONE
+1. Mở link bằng Safari (bắt buộc dùng Safari).
+2. Đợi trang tải xong một lần khi có mạng.
+3. Bấm nút Chia sẻ > Thêm vào Màn hình chính.
+4. Từ đó mở app từ biểu tượng trên màn hình, dùng được cả khi mất mạng.
+
+LƯU Ý
+- Dữ liệu lưu trên từng thiết bị, không tự đồng bộ giữa các máy.
+- Hãy nhập sản phẩm SAU khi đã thêm vào Màn hình chính (app trên Màn hình chính có bộ nhớ riêng, tách khỏi Safari).
+- Bấm Sao lưu trong Cài đặt thường xuyên và lưu đoạn văn bản vào Ghi chú.
+- Khi cần cập nhật app, mình gửi bản mới; bạn tải đè thư mục lên cùng dự án. Đổi V='banhang-v1' trong sw.js thành v2, v3... để máy nhận bản mới.
+
+VÌ SAO DỮ LIỆU CÓ THỂ BỊ MẤT KHI THOÁT RA VÀO LẠI
+- Hãy cài app từ LINK RIÊNG của bạn (xxxx.netlify.app), KHÔNG cài từ link claude.ai. Link trong Claude chạy trong khung bảo mật, có thể không giữ dữ liệu khi thoát.
+- Trên iPhone, phải mở link bằng Safari rồi Chia sẻ > Thêm vào Màn hình chính. Không dùng chế độ Duyệt web riêng tư.
+- Vào Cài đặt trong app, dòng "Nơi lưu dữ liệu" phải hiện địa chỉ riêng của bạn và "đang chạy như app trên màn hình chính".
+- Nếu đầu trang có khung đỏ cảnh báo, nghĩa là bạn đang mở sai bản.
+- Đừng xóa app rồi cài lại trước khi bấm Sao lưu ra ngoài máy.
