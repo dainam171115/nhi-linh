@@ -62,6 +62,8 @@ main{padding:10px 16px}
 .ev span{font-variant-numeric:tabular-nums;white-space:nowrap}
 .ckb{width:26px;height:26px;flex:none;accent-color:var(--ac)}
 .vip{background:var(--am);color:#241a00;font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:6px}
+.in[type=date],.in[type=month]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;text-align:left;min-height:48px}
+.qn{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:15px;pointer-events:none}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--sf);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav button{flex:1;padding:14px 4px;background:none;border:0;color:var(--mu);font-size:13px}
 nav button.on{color:var(--ac);font-weight:700}
@@ -221,10 +223,10 @@ function pickImg(inp){
 const cus=id=>S.customers.find(c=>c.id===id);
 const dt=t=>new Date(t).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'});
 function cstat(id){const l=S.sales.filter(s=>s.cid===id).sort((a,b)=>b.t-a.t);return{n:l.length,sum:l.reduce((a,s)=>a+s.total,0)-(S.rets||[]).filter(r=>r.cid===id).reduce((a,r)=>a+r.amt,0),l,q:l.reduce((a,s)=>a+s.items.reduce((x,i)=>x+i.qty,0),0)-(S.rets||[]).filter(r=>r.cid===id).reduce((a,r)=>a+r.items.reduce((x,i)=>x+i.qty,0),0)}}
-function cdebt(id,x){return Math.round(S.sales.filter(s=>s.cid===id&&s.id!==x).reduce((a,s)=>a+Math.max(0,s.total-s.paid)-(s.dp||0),0)-(S.pays||[]).filter(p=>p.cid===id).reduce((a,p)=>a+p.amt,0)-(S.rets||[]).filter(r=>r.cid===id).reduce((a,r)=>a+r.dc,0))}
+function cdebt(id,x){return Math.round(S.sales.filter(s=>s.cid===id&&s.id!==x).reduce((a,s)=>a+Math.max(0,s.total-s.paid)-(s.dp||0),0)-(S.pays||[]).filter(p=>p.cid===id).reduce((a,p)=>a+p.amt+(p.ds||0),0)-(S.rets||[]).filter(r=>r.cid===id).reduce((a,r)=>a+r.dc,0))}
 function totalDebt(){return S.customers.reduce((a,c)=>a+Math.max(0,cdebt(c.id)),0)}
 function cusV(){
- return `<div class="stat"><div><small>Tổng khách đã mua</small><b>${money(S.customers.reduce((a,c)=>a+cstat(c.id).sum,0))}</b></div><div onclick="debtL()" style="cursor:pointer"><small>Tổng công nợ ›</small><b style="color:var(--dg)">${money(totalDebt())}</b></div></div><div class="bar"><b>${S.customers.length} khách hàng</b><button class="btn p" onclick="editC()">Thêm</button></div><div class="acts" style="margin:0 0 10px"><button class="btn" onclick="impMenu()">Nhập Excel/CSV</button><button class="btn" onclick="expCus()">Xuất Excel/CSV</button></div><input type="file" id="xf" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange="impCus(this)"><div class="acts" style="margin:0 0 10px;gap:6px"><button class="btn" id="selb" style="padding:12px 10px;white-space:nowrap" onclick="selToggle()">${selM?'Bỏ chọn':'Tự tích'}</button><button class="btn" style="padding:12px 10px;white-space:nowrap" onclick="selAll()">Chọn toàn bộ</button><button class="btn p" id="msgb" style="padding:12px 10px;white-space:nowrap" onclick="msgGo()">Nhắn tin (${sel.size})</button></div>${cusChips()}<input class="in" placeholder="Tìm theo tên hoặc số điện thoại" value="${esc(cq)}" oninput="cq=this.value;$('#cs').innerHTML=cusL()"><div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1"><label style="margin:0 0 4px">Đã mua từ (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 5000" value="${cmin>-Infinity?cmin/1000:''}" oninput="cmin=this.value===''?-Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div><div style="flex:1"><label style="margin:0 0 4px">Đến (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 10000" value="${cmax<Infinity?cmax/1000:''}" oninput="cmax=this.value===''?Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div></div><div class="mu" style="font-size:13px;margin:4px 0 6px">10 = 10.000 đ. Muốn lọc khách mua trên 5.000.000: nhập 5000 ở ô Từ, để trống ô Đến.</div><div id="cs">${cusL()}</div>`;
+ return `<div class="stat"><div><small>Tổng khách đã mua</small><b>${money(S.customers.reduce((a,c)=>a+cstat(c.id).sum,0))}</b></div><div onclick="debtL()" style="cursor:pointer"><small>Tổng công nợ ›</small><b style="color:var(--dg)">${money(totalDebt())}</b></div></div><div class="bar"><b>${S.customers.length} khách hàng</b><button class="btn p" onclick="editC()">Thêm</button></div><div class="acts" style="margin:0 0 10px"><button class="btn" onclick="impMenu()">Nhập Excel/CSV</button><button class="btn" onclick="expCus()">Xuất Excel/CSV</button></div><input type="file" id="xf" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange="impCus(this)"><div class="acts" style="margin:0 0 10px;gap:6px"><button class="btn" id="selb" style="padding:12px 10px;white-space:nowrap" onclick="selToggle()">${selM?'Bỏ chọn':'Tự tích'}</button><button class="btn" style="padding:12px 10px;white-space:nowrap" onclick="selAll()">Chọn toàn bộ</button><button class="btn p" id="msgb" style="padding:12px 10px;white-space:nowrap" onclick="msgGo()">Nhắn tin (${sel.size})</button></div>${cusChips()}<div style="position:relative"><input class="in" style="padding-right:60px" placeholder="Tìm theo tên hoặc số điện thoại" value="${esc(cq)}" oninput="cq=this.value;$('#cs').innerHTML=cusL();cqUp()"><span id="cqn" class="qn">${cq.trim()?'('+cusF().length+')':''}</span></div><div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1"><label style="margin:0 0 4px">Đã mua từ (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 5000" value="${cmin>-Infinity?cmin/1000:''}" oninput="cmin=this.value===''?-Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div><div style="flex:1"><label style="margin:0 0 4px">Đến (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 10000" value="${cmax<Infinity?cmax/1000:''}" oninput="cmax=this.value===''?Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div></div><div class="mu" style="font-size:13px;margin:4px 0 6px">10 = 10.000 đ. Muốn lọc khách mua trên 5.000.000: nhập 5000 ở ô Từ, để trống ô Đến.</div><div id="cs">${cusL()}</div>`;
 }
 function cusL(){
  if(!S.customers.length)return '<div class="empty">Chưa có khách hàng. Bấm Thêm để lưu tên và số điện thoại.</div>';
@@ -235,9 +237,9 @@ function cusL(){
 function cusD(id){
  const c=cus(id),t=cstat(id),d=cdebt(id);
  const ev=[...t.l.map(s=>({t:s.t,s})),...(S.pays||[]).filter(p=>p.cid===id).map(p=>({t:p.t,p})),...(S.rets||[]).filter(r=>r.cid===id).map(r=>({t:r.t,r}))].sort((a,b)=>b.t-a.t).slice(0,40);
- modal(`<h2>${esc(c.name)}</h2><div class="mu">${phs(c)}${c.note?'<br>'+esc(c.note):''}${c.bd?'<br>Sinh nhật: '+c.bd.split('-').reverse().join('/'):''}</div><div class="stat"><div><small>Tổng đã mua</small><b>${money(t.sum)}</b></div><div><small>Số lần mua</small><b>${t.n} <span class="mu" style="font-size:15px;font-weight:400">(${t.q} món)</span></b></div><div class="w"><small>${d<0?'Số dư (tiền khách còn ở cửa hàng)':'Công nợ'}</small><b style="color:${d>0?'var(--dg)':d<0?'var(--ac)':'var(--ink)'}">${d<0?'+':''}${money(Math.abs(d))}</b></div></div>`+
+ modal(`<h2>${esc(c.name)}</h2><div class="mu">${phs(c)}${c.addr?'<br>Địa chỉ: '+esc(c.addr):''}${c.note?'<br>'+esc(c.note):''}${c.note2?'<br>'+esc(c.note2):''}${c.bd?'<br>Sinh nhật: '+c.bd.split('-').reverse().join('/'):''}</div><div class="stat"><div><small>Tổng đã mua</small><b>${money(t.sum)}</b></div><div><small>Số lần mua</small><b>${t.n} <span class="mu" style="font-size:15px;font-weight:400">(${t.q} món)</span></b></div><div class="w"><small>${d<0?'Số dư (tiền khách còn ở cửa hàng)':'Công nợ'}</small><b style="color:${d>0?'var(--dg)':d<0?'var(--ac)':'var(--ink)'}">${d<0?'+':''}${money(Math.abs(d))}</b></div></div>`+
  ordOf(id)+(`<button class="btn p" style="width:100%" onclick="payD('${id}')">Khách trả tiền</button>`)+
- (ev.length?ev.map(e=>e.s?`<button class="row" onclick="showRc('${e.s.id}')"><div><b>Hóa đơn #${e.s.n}</b><span class="mu"> (${nI(e.s)} món)</span><br><small class="mu">${dt(e.s.t)}${e.s.paid<e.s.total?' · nợ '+money(e.s.total-e.s.paid):''}</small></div><b>${money(e.s.total)}</b></button>`:e.r?`<div class="row"><div><b>Hoàn hàng (HĐ #${e.r.n})</b><br><small class="mu">${dt(e.r.t)}</small></div><b>−${money(e.r.amt)}</b></div>`:`<div class="row"><div><b>Khách trả tiền</b><br><small class="mu">${dt(e.p.t)}${e.p.pm?' · '+esc(e.p.pm):''}</small></div><b>−${money(e.p.amt)}</b></div>`).join(''):'<div class="empty">Chưa có lần mua nào.</div>')+
+ (ev.length?ev.map(e=>e.s?`<button class="row" onclick="showRc('${e.s.id}')"><div><b>Hóa đơn #${e.s.n}</b><span class="mu"> (${nI(e.s)} món)</span><br><small class="mu">${dt(e.s.t)}${e.s.paid<e.s.total?' · nợ '+money(e.s.total-e.s.paid):''}</small></div><b>${money(e.s.total)}</b></button>`:e.r?`<div class="row"><div><b>Hoàn hàng (HĐ #${e.r.n})</b><br><small class="mu">${dt(e.r.t)}</small></div><b>−${money(e.r.amt)}</b></div>`:`<div class="row"><div><b>Khách trả tiền</b><br><small class="mu">${dt(e.p.t)}${e.p.pm?' · '+esc(e.p.pm):''}${e.p.ds?' · giảm giá '+money(e.p.ds):''}</small></div><b>−${money(e.p.amt+(e.p.ds||0))}</b></div>`).join(''):'<div class="empty">Chưa có lần mua nào.</div>')+
  `<div class="acts"><button class="btn" onclick="closeM()">Đóng</button><a class="btn" style="text-decoration:none" href="tel:${esc(c.phone)}">Gọi</a><button class="btn p" onclick="editC('${id}')">Sửa</button></div>`);
 }
 function payD(id,keep){payId=id;if(!keep){payAmt=null;pnote2=''}
@@ -494,7 +496,7 @@ function repV(){if(per==='daily')return dailyV();if(per==='pm')return perSel()+p
 /* Cài đặt */
 function setV(){
  return `<label>Tên cửa hàng (hiện trên hóa đơn)</label><input class="in" value="${esc(S.store)}" onchange="S.store=this.value.trim()||'Cửa hàng';save();render()">
- <label>Khách VIP: tổng mua từ (nghìn đồng, 10 = 10.000)</label><input class="in" type="number" inputmode="decimal" step="any" value="${vipT()/1000}" onchange="S.vip=Math.round((+this.value||0)*1000)||20000000;save();render()"><label>Thứ tự các nút</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="sortUI()">Sắp xếp thứ tự các nút và tab</button></div><label>Tag cách nhận tiền</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="tagMgr()">Quản lý tag (${S.tags.length})</button></div><label>Nhắc sao lưu ra Tệp / iCloud</label><div class="chips" style="flex-wrap:wrap;overflow:visible">${[['day','Mỗi ngày'],['week','Mỗi tuần'],['month','Mỗi tháng'],['off','Tắt nhắc']].map(o=>`<button class="chip ${(S.bkf||'day')===o[0]?'on':''}" onclick="S.bkf='${o[0]}';save(true);render()">${o[1]}</button>`).join('')}</div><label>Sao lưu và khôi phục dữ liệu</label><textarea class="in" id="bk" placeholder="Dán dữ liệu sao lưu dạng văn bản vào đây rồi bấm Khôi phục từ văn bản"></textarea>
+ <label>Khách VIP: tổng mua từ (nghìn đồng, 10 = 10.000)</label><input class="in" type="number" inputmode="decimal" step="any" value="${vipT()/1000}" onchange="S.vip=Math.round((+this.value||0)*1000)||20000000;save();render()"><label>Tên khách hàng</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="normAll()">Chuẩn hóa tên toàn bộ khách</button></div><label>Thứ tự các nút</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="sortUI()">Sắp xếp thứ tự các nút và tab</button></div><label>Tag cách nhận tiền</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="tagMgr()">Quản lý tag (${S.tags.length})</button></div><label>Nhắc sao lưu ra Tệp / iCloud</label><div class="chips" style="flex-wrap:wrap;overflow:visible">${[['day','Mỗi ngày'],['week','Mỗi tuần'],['month','Mỗi tháng'],['off','Tắt nhắc']].map(o=>`<button class="chip ${(S.bkf||'day')===o[0]?'on':''}" onclick="S.bkf='${o[0]}';save(true);render()">${o[1]}</button>`).join('')}</div><label>Sao lưu và khôi phục dữ liệu</label><textarea class="in" id="bk" placeholder="Dán dữ liệu sao lưu dạng văn bản vào đây rồi bấm Khôi phục từ văn bản"></textarea>
  <div class="acts"><button class="btn p" onclick="doBackup()">Sao lưu ra file</button><button class="btn" onclick="$('#bf').click()">Khôi phục từ file</button></div><input type="file" id="bf" accept=".json,application/json" hidden onchange="pickFile(this)">
  <div class="acts"><button class="btn" onclick="exportB()">Sao chép dạng văn bản</button><button class="btn" onclick="importB()">Khôi phục từ văn bản</button></div>
  <p class="mu" style="font-size:13px">${S.bk?'Lần sao lưu gần nhất: '+dt(S.bk):'Chưa sao lưu ra ngoài lần nào.'}</p><p class="mu" style="font-size:13px">Nơi lưu dữ liệu: ${esc(location.host||'tệp cục bộ')} · ${matchMedia('(display-mode: standalone)').matches?'đang chạy như app trên màn hình chính':'đang chạy trong trình duyệt'}</p>
@@ -1100,6 +1102,100 @@ function impRows(rows){
  });
  save();render();
  modal(`<h2>Đã nhập khách hàng</h2><div class="mu">Thêm mới ${add} · Cập nhật ${upd} · Bỏ qua ${skip} dòng (thiếu tên hoặc không có số điện thoại đủ 10 số)${bad?'<br>'+bad+' số không đủ 10 số đã bị bỏ':''}<br>Nếu một ô có nhiều số, app đã tự tách riêng; số đầu là số chính.</div><div class="acts"><button class="btn p" style="flex:1" onclick="closeM()">Đóng</button></div>`);
+}
+function cqUp(){const e=$('#cqn');if(e)e.textContent=cq.trim()?'('+cusF().length+')':''}
+function fixName(s,keep){
+ let t=String(s).replace(/\./g,' ').replace(/\s{2,}/g,' ');
+ if(!keep)t=t.trim();
+ return t.split(' ').map(w=>w.replace(/^([^\p{L}]*)(\p{L})(.*)$/u,(m,a,b,c)=>a+b.toLocaleUpperCase('vi')+c.toLocaleLowerCase('vi'))).join(' ');
+}
+function fmtName(el,fin){const p=el.selectionStart,v=el.value,f=fixName(v,!fin);if(f!==v){el.value=f;try{el.setSelectionRange(p,p)}catch(e){}}}
+function normAll(){
+ ask('Chuẩn hóa tên toàn bộ khách: viết hoa chữ cái đầu mỗi từ, dấu chấm thành khoảng cách?',()=>{
+  let n=0;S.customers.forEach(c=>{const f=fixName(c.name);if(f!==c.name){c.name=f;n++}});
+  save();render();toast('Đã sửa '+n+' tên');
+ });
+}
+let payDs=null;
+function payUp(d){const a=Math.round((+$('#pa').value||0)*1000),s=Math.round((+$('#pds').value||0)*1000);$('#pn2').textContent=((a||s)?'Trả '+money(a)+(s?' + giảm '+money(s):'')+'. ':'')+'Sau khi trả: '+bal(d-a-s)}
+function payD(id,keep){
+ payId=id;if(!keep){payAmt=null;payDs=null;pnote2=''}
+ const d=Math.round(cdebt(id));
+ modal(`<h2>Khách trả tiền · ${esc(cus(id).name)}</h2><div class="mu">${bal(d)}</div><label>Số tiền khách trả (nghìn đồng, 10 = 10.000)</label><input class="in" id="pa" type="number" inputmode="decimal" step="any" value="${keep&&payAmt!==null?payAmt:(d>0?d/1000:'')}" oninput="payAmt=this.value;payUp(${d})"><label>Giảm giá cho khách (nghìn đồng, bỏ phần còn thiếu)</label><input class="in" id="pds" type="number" inputmode="decimal" step="any" value="${keep&&payDs!==null?payDs:''}" oninput="payDs=this.value;payUp(${d})"><div class="mu" id="pn2" style="font-size:13px;margin-top:4px"></div>${tagBox('p')}<div class="acts"><button class="btn" onclick="cusD('${id}')">Hủy</button><button class="btn p" onclick="savePay('${id}')">Xác nhận thu</button></div>`);
+ payUp(d);
+}
+function savePay(id){
+ const a=Math.round((+$('#pa').value||0)*1000),s=Math.round((+$('#pds').value||0)*1000);
+ if(!(a>0)&&!(s>0)){toast('Nhập số tiền khách trả hoặc giảm giá');return}
+ S.pays.push({id:uid(),cid:id,t:Date.now(),amt:a,ds:s,pm:a>0?ptag:'',pn:pnote2});
+ save();toast('Đã ghi nhận');render();cusD(id);
+}
+let ordC='';
+function ordSearch(){
+ const q=$('#osq').value,k=nz(q),t=q.trim(),l=S.customers.filter(c=>!k||nz(c.name).includes(k)||allPh(c).some(p=>p.includes(t)));
+ $('#osl').innerHTML=(q?`<div class="mu" style="font-size:13px">Tìm được ${l.length} khách</div>`:'')+l.slice(0,40).map(c=>`<button class="row" onclick="ordPick('${c.id}')"><div><b>${esc(c.name)}</b><br><small class="mu">${phs(c)}</small></div></button>`).join('')+(l.length>40?'<div class="mu" style="font-size:13px">Còn '+(l.length-40)+' khách nữa, gõ thêm để lọc</div>':'');
+}
+function ordPick(id){ordC=id;const c=cus(id);$('#osel').innerHTML='<b>Đã chọn: '+esc(c.name)+' · '+esc(c.phone)+'</b>'}
+function ordAdd(pid){
+ if(!S.customers.length){toast('Hãy thêm khách hàng trước ở tab Khách hàng');return}
+ if(!dtag)dtag=ptag||'';
+ ordC='';
+ modal(`<h2>Thêm khách đặt</h2><label>Khách hàng</label><div id="osel" class="mu" style="font-size:15px;margin-bottom:6px">Chưa chọn khách</div><input class="in" id="osq" placeholder="Tìm khách theo tên hoặc số điện thoại" oninput="ordSearch()"><div id="osl" style="max-height:210px;overflow:auto"></div><label>Số lượng</label><input class="in" id="oq" type="number" inputmode="numeric" value="1"><label>Tiền cọc (nghìn đồng, 10 = 10.000)</label><input class="in" id="odp" type="number" inputmode="decimal" step="any" placeholder="để trống nếu chưa cọc"><label>Nhận tiền cọc qua (tag tài khoản)</label><div class="chips" id="dtg" style="flex-wrap:wrap;overflow:visible">${S.tags.map((t,i)=>`<button class="chip ${dtag===t?'on':''}" onclick="pickDt(${i})">${esc(t)}</button>`).join('')}</div><label>Ghi chú (size, màu...)</label><input class="in" id="onn" placeholder="vd: size M, màu đen"><div class="acts"><button class="btn" onclick="ordMgr('${pid}')">Hủy</button><button class="btn p" onclick="ordSave('${pid}')">Lưu</button></div>`);
+ ordSearch();
+}
+function ordSave(pid){
+ if(!ordC){toast('Hãy chọn khách đặt hàng');return}
+ const q=Math.max(1,Math.round(+$('#oq').value||1)),dep=Math.round((+$('#odp').value||0)*1000),cid=ordC,note=$('#onn').value.trim(),id=uid(),now=Date.now();
+ OR().push({id,pid,cid,qty:q,dep,note,t:now,st:'wait',dpm:dtag});
+ if(dep>0)(S.deps=S.deps||[]).push({id:uid(),oid:id,t:now,pm:dtag,v:dep,cid,pn:note});
+ if(dtag){S.lastTag=dtag;ptag=dtag}
+ save();render();ordMgr(pid);
+}
+function editC(id,fc){
+ const c=id?cus(id):{name:'',phone:'',note:'',note2:'',addr:'',bd:'',ex:[]};
+ modal(`<h2>${id?'Sửa khách hàng':'Thêm khách hàng'}</h2><label>Tên khách hàng</label><input class="in" id="cn" autocapitalize="words" value="${esc(c.name)}" oninput="if(!event.isComposing)fmtName(this)" onblur="fmtName(this,1)"><label>Số điện thoại (10 số)</label><input class="in" id="cph" type="tel" inputmode="tel" value="${esc(c.phone)}"><div id="exw">${(c.ex||[]).map(exRow).join('')}</div><button class="btn" style="margin-top:8px" onclick="addPh()">+ Thêm số điện thoại</button><label>Ngày sinh (không bắt buộc)</label><div style="display:flex;gap:8px"><input class="in" type="date" id="cbd" value="${c.bd||''}" style="flex:1;min-width:0"><button class="btn" style="padding:8px 12px;white-space:nowrap" onclick="$('#cbd').value=''">Bỏ ngày sinh</button></div><label>Địa chỉ</label><input class="in" id="cadr" value="${esc(c.addr||'')}"><label>Ghi chú</label><input class="in" id="cnote" value="${esc(c.note||'')}"><label>Ghi chú 2</label><input class="in" id="cnote2" value="${esc(c.note2||'')}"><div class="acts">${id?`<button class="btn d" onclick="delC('${id}')">Xóa</button>`:`<button class="btn" onclick="${fc?'pickC()':'closeM()'}">Hủy</button>`}<button class="btn p" onclick="saveC('${id||''}',${fc?1:0})">Lưu</button></div>`);
+}
+function saveC(id,fc){
+ const name=fixName($('#cn').value),addr=$('#cadr').value.trim(),note=$('#cnote').value.trim(),note2=$('#cnote2').value.trim(),bd=$('#cbd').value;
+ const nums=[$('#cph').value,...[...document.querySelectorAll('.exin')].map(i=>i.value)].map(v=>String(v).replace(/[\s.\-()]/g,'')).filter(Boolean);
+ if(!name||!nums.length){toast('Nhập tên và số điện thoại');return}
+ if(nums.some(n=>!/^\d{10}$/.test(n))){toast('Số điện thoại phải đủ 10 số');return}
+ if(new Set(nums).size!==nums.length){toast('Có số điện thoại bị nhập trùng');return}
+ if(S.customers.some(c=>c.id!==id&&nums.some(n=>allPh(c).includes(n)))){toast('Một số điện thoại này đã có ở khách khác');return}
+ const phone=nums[0],ex=nums.slice(1);
+ if(id)Object.assign(cus(id),{name,phone,ex,addr,note,note2,bd});else{const c={id:uid(),name,phone,ex,addr,note,note2,bd};S.customers.push(c);if(fc)cust=c.id}
+ save();
+ if(fc){openCart();return}
+ closeM();render();
+}
+function cusRows(){
+ const mx=Math.max(1,...S.customers.map(c=>(c.ex||[]).length)),h=['Tên','Số điện thoại','Địa chỉ','Ghi chú','Ghi chú 2'];
+ for(let i=0;i<mx;i++)h.push('Số điện thoại '+(i+2));
+ return [h].concat(S.customers.map(c=>{const r=[c.name,c.phone,c.addr||'',c.note||'',c.note2||''];for(let i=0;i<mx;i++)r.push((c.ex||[])[i]||'');return r}));
+}
+function impRows(rows){
+ const h=(rows[0]||[]).map(x=>nz(String(x||''))),r0=(rows[0]||[]).some(v=>isPh(String(v||'').trim()));
+ const hasH=!r0&&h.some(x=>/\bten\b|name|dien thoai|phone|sdt|dia chi|ghi chu/.test(x));
+ const iA=hasH?h.findIndex(x=>/dia chi/.test(x)):-1,iN2=hasH?h.findIndex(x=>/ghi chu 2/.test(x)):-1,iN=hasH?h.findIndex(x=>/ghi chu/.test(x)&&!/ghi chu 2/.test(x)):-1;
+ let add=0,upd=0,skip=0,bad=0;
+ rows.slice(hasH?1:0).forEach(r=>{
+  const name=fixName(r[0]||'');
+  let addr='',note='',note2='',ph=splitPh(r[1]);
+  r.forEach((v,i)=>{
+   if(i<2)return;
+   const s=String(v||'').trim();if(!s)return;
+   if(isPh(s)){ph=ph.concat(splitPh(s));return}
+   if(i===iA)addr=s;else if(i===iN2)note2=s;else if(i===iN)note=s;else note=note?note+' '+s:s;
+  });
+  const good=[...new Set(ph.filter(p=>/^\d{10}$/.test(p)))];
+  bad+=ph.filter(p=>!/^\d{10}$/.test(p)).length;
+  if(!name||!good.length){skip++;return}
+  const c=S.customers.find(x=>allPh(x).some(p=>good.includes(p)));
+  if(c){c.name=name;if(addr)c.addr=addr;if(note)c.note=note;if(note2)c.note2=note2;good.forEach(p=>{if(!allPh(c).includes(p))(c.ex=c.ex||[]).push(p)});upd++}
+  else{S.customers.push({id:uid(),name,phone:good[0],ex:good.slice(1),addr,note,note2});add++}
+ });
+ save();render();
+ modal(`<h2>Đã nhập khách hàng</h2><div class="mu">Thêm mới ${add} · Cập nhật ${upd} · Bỏ qua ${skip} dòng (thiếu tên hoặc không có số điện thoại đủ 10 số)${bad?'<br>'+bad+' số không đủ 10 số đã bị bỏ':''}<br>Ô nào có nhiều số đã được tự tách riêng; số đầu là số chính. Tên đã được viết hoa chữ cái đầu.</div><div class="acts"><button class="btn p" style="flex:1" onclick="closeM()">Đóng</button></div>`);
 }
 function rangeUI(){return `<div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1"><label style="margin:0 0 4px">Từ ngày</label><input class="in" type="date" value="${rf}" onchange="rf=this.value;render()"></div><div style="flex:1"><label style="margin:0 0 4px">Đến ngày</label><input class="in" type="date" value="${rt}" onchange="rt=this.value;render()"></div></div>`}
 function rcus(r){const s=S.sales.find(x=>x.id===r.sid);return s&&s.cn?' · '+esc(s.cn)+(s.cp?' · '+esc(s.cp):''):''}
