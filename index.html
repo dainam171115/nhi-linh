@@ -66,6 +66,7 @@ main{padding:10px 16px}
 .qn{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:15px;pointer-events:none}
 .odbar{position:sticky;bottom:calc(60px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;padding:10px 0;background:var(--bg);z-index:3}
 .odbar .p{flex:1}
+.gr{color:#22a559;font-weight:600}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--sf);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav button{flex:1;padding:14px 4px;background:none;border:0;color:var(--mu);font-size:13px}
 nav button.on{color:var(--ac);font-weight:700}
@@ -95,9 +96,9 @@ label{display:block;font-size:13px;color:var(--mu);margin:12px 0 4px}
 .empty .btn{margin-top:12px}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(120px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:30;display:none}
-.rc{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.rc{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5}
 .rc hr{border:0;border-top:1px dashed var(--mu)}
-.rc .l{display:flex;justify-content:space-between;gap:8px;margin:4px 0}
+.rc .l{display:flex;justify-content:space-between;gap:10px;margin:8px 0}
 textarea.in{min-height:90px;font-size:12px}
 @media print{body>*:not(#m){display:none!important}#m{position:static;background:none;display:block}.box{max-height:none;padding:0}.np{display:none!important}}
 </style>
@@ -184,7 +185,7 @@ function pay(){
 }
 function rcHtml(s){
  return `<div class="rc" id="rc"><div style="text-align:center"><b>${esc(S.store)}</b><br>${dt(s.t)}<br>Hóa đơn #${s.n} (${nI(s)} món)</div>${s.cn?`<div>Khách: ${esc(s.cn)} - ${esc(s.cp)}</div>`:''}<hr>`+
- s.items.map(i=>`<div class="l"><span>${esc(i.name)}<br>${i.qty} × ${money(i.price)}</span><span>${money(i.qty*i.price)}</span></div>`).join('')+
+ s.items.map(i=>`<div class="l"><span><b>• ${esc(i.name)}</b><br><span style="opacity:.75;padding-left:14px">${i.qty} × ${money(i.price)}</span></span><span>${money(i.qty*i.price)}</span></div>`).join('')+
  `<hr>`+(s.disc?`<div class="l"><span>Giảm giá</span><span>−${money(s.disc)}</span></div>`:'')+
  `<div class="l"><b>Tổng cộng</b><b>${money(s.total)}</b></div><div class="l"><span>Khách đưa</span><span>${money(s.paid)}</span></div>${s.dep?`<div class="l"><span>Trong đó đã cọc trước</span><span>${money(s.dep)}</span></div>`:''}${s.pm||s.pn?`<div class="l"><span>Nhận tiền</span><span>${esc(s.pm||'')}${s.pn?' · '+esc(s.pn):''}</span></div>`:''}${s.dp?`<div class="l"><span>Trừ vào công nợ cũ</span><span>${money(s.dp)}</span></div>`:''}${s.paid<s.total?`<div class="l"><b>Còn nợ</b><b>${money(s.total-s.paid)}</b></div>`:`<div class="l"><span>Tiền thừa</span><span>${money(s.paid-s.total-(s.dp||0))}</span></div>`}<hr><div style="text-align:center">Cảm ơn quý khách</div></div>`;
 }
@@ -1402,6 +1403,38 @@ function msgSend(id){
  else{try{navigator.clipboard.writeText(txt).catch(()=>{})}catch(e){}url='https://zalo.me/'+c.phone.replace(/[^\d]/g,'')}
  const a=document.createElement('a');a.href=url;if(msgCh==='zalo')a.target='_blank';document.body.appendChild(a);a.click();a.remove();
  setTimeout(msgR,300);
+}
+let ordCid='';
+function ordArr(o){const p=prod(o.pid);return !!p&&!p.od}
+function ordUp(){
+ const ar=OR().filter(o=>o.cid===ordCid&&oAct(o)&&ordArr(o)),all=ar.length>0&&ar.every(o=>ordSel.has(o.id));
+ const b=$('#osb');if(b)b.textContent='Bán các món đã chọn ('+ordSel.size+')';
+ const s=$('#ost');if(s)s.textContent=all?'Bỏ chọn':'Chọn';
+}
+function ordTog(id){if(ordSel.has(id))ordSel.delete(id);else ordSel.add(id);const e=$('#oc_'+id);if(e)e.checked=ordSel.has(id);ordUp()}
+function ordTogAll(cid){
+ ordCid=cid;
+ const ar=OR().filter(o=>o.cid===cid&&oAct(o)&&ordArr(o)),all=ar.length>0&&ar.every(o=>ordSel.has(o.id));
+ ar.forEach(o=>{if(all)ordSel.delete(o.id);else ordSel.add(o.id);const e=$('#oc_'+o.id);if(e)e.checked=!all});
+ ordUp();
+}
+function ordSellSel(cid){
+ const ids=[...ordSel].filter(i=>{const o=OR().find(x=>x.id===i);return o&&o.cid===cid&&oAct(o)});
+ if(!ids.length){toast('Hãy chọn những món cần bán');return}
+ ordSellIds(ids,cid);
+}
+function cusEx(x){
+ if(cfl==='old'){const t=x.t.l[0].t;return ' · mua cuối '+fd(t)+' ('+Math.floor((Date.now()-t)/864e5)+' ngày trước)'}
+ if(cfl==='bd'){const p=x.c.bd.split('-');return ' · sinh nhật '+p[2]+'/'+p[1]+'/'+p[0]}
+ if(cfl==='ord'){const l=OR().filter(o=>o.cid===x.c.id&&oAct(o)),ar=l.filter(ordArr).length;return ' · '+l.length+' đơn đặt <span class="gr">('+ar+' đã về)</span>'}
+ return '';
+}
+function ordOf(cid){
+ ordCid=cid;
+ const l=OR().filter(o=>o.cid===cid&&oAct(o)).sort((a,b)=>b.t-a.t),cx=OR().filter(o=>o.cid===cid&&o.st==='cancel').sort((a,b)=>(b.ct||0)-(a.ct||0)).slice(0,5);
+ if(!l.length&&!cx.length)return '';
+ const ar=l.filter(ordArr);
+ return (l.length?`<div class="mu" style="margin-top:10px"><b>Đang đặt order · ${l.length} đơn đặt <span class="gr">(${ar.length} đã về)</span></b></div>`+l.map(o=>{const p=prod(o.pid),ok=ordArr(o);return `<div class="row"${ok?` onclick="ordTog('${o.id}')"`:''}>${ok?`<input type="checkbox" class="ckb" id="oc_${o.id}" ${ordSel.has(o.id)?'checked':''} style="pointer-events:none" tabindex="-1">`:''}<div style="flex:1"><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · Cọc ${money(o.dep)}${o.tt?' · đã báo hàng về '+fd(o.tt):''}${ok?' · <span class="gr">hàng đã về'+(p.av?' '+fd(p.av):'')+'</span>':' · chưa về'}</small></div></div>`}).join('')+(ar.length?`<div class="acts"><button class="btn" id="ost" style="flex:1" onclick="ordTogAll('${cid}')">Chọn</button><button class="btn p" id="osb" style="flex:1" onclick="ordSellSel('${cid}')">Bán các món đã chọn (${ordSel.size})</button></div>`:''):'')+(cx.length?`<div class="mu" style="margin-top:10px"><b>Đã hủy</b></div>`+cx.map(o=>{const p=prod(o.pid);return `<div class="row"><div><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · đã hủy ${fd(o.ct||o.t)}</small></div></div>`}).join(''):'');
 }
 function rangeUI(){return `<div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1"><label style="margin:0 0 4px">Từ ngày</label><input class="in" type="date" value="${rf}" onchange="rf=this.value;render()"></div><div style="flex:1"><label style="margin:0 0 4px">Đến ngày</label><input class="in" type="date" value="${rt}" onchange="rt=this.value;render()"></div></div>`}
 function rcus(r){const s=S.sales.find(x=>x.id===r.sid);return s&&s.cn?' · '+esc(s.cn)+(s.cp?' · '+esc(s.cp):''):''}
