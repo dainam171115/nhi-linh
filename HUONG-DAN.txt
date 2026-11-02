@@ -30,3 +30,10 @@ VÌ SAO DỮ LIỆU CÓ THỂ BỊ MẤT KHI THOÁT RA VÀO LẠI
 - Vào Cài đặt trong app, dòng "Nơi lưu dữ liệu" phải hiện địa chỉ riêng của bạn và "đang chạy như app trên màn hình chính".
 - Nếu đầu trang có khung đỏ cảnh báo, nghĩa là bạn đang mở sai bản.
 - Đừng xóa app rồi cài lại trước khi bấm Sao lưu ra ngoài máy.
+
+CÁCH 3 - GitHub Pages (miễn phí)
+1. Tạo repository mới trên github.com (ví dụ: ban-hang), chọn Public.
+2. Bấm Add file > Upload files, kéo TẤT CẢ file trong thư mục này lên (index.html, sw.js, manifest.webmanifest, 3 file icon), bấm Commit changes.
+3. Vào Settings > Pages > Source: chọn Deploy from a branch, Branch: main, thư mục / (root), bấm Save.
+4. Đợi 1-2 phút, link có dạng https://TENBAN.github.io/ban-hang/ . Mở link này bằng Safari rồi Chia sẻ > Thêm vào Màn hình chính.
+5. Khi sửa code: mở index.html trên GitHub, bấm biểu tượng bút chì để sửa, Commit. Nhớ đổi V='banhang-v36' trong sw.js thành v32, v33... để máy nhận bản mới.

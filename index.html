@@ -101,6 +101,14 @@ label{display:block;font-size:13px;color:var(--mu);margin:12px 0 4px}
 .rc .l{display:flex;justify-content:space-between;gap:10px;margin:8px 0}
 textarea.in{min-height:90px;font-size:12px}
 @media print{body>*:not(#m){display:none!important}#m{position:static;background:none;display:block}.box{max-height:none;padding:0}.np{display:none!important}}
+
+:root{--ok:#12873f;--or:#c46a00;--pu:#7a3fd1;--tl:#0b8a8a}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ok:#4cd27f;--or:#ffab40;--pu:#b794ff;--tl:#4fd1d1}}
+:root[data-theme="dark"]{--ok:#4cd27f;--or:#ffab40;--pu:#b794ff;--tl:#4fd1d1}
+.chip[style*="--tc"]{border-left:4px solid var(--tc)}
+.chip.on[style*="--tc"]{background:var(--tc);border-color:var(--tc);color:var(--act);font-weight:700}
+.pc i{color:var(--ok);font-style:normal;font-weight:600}
+.pc.out i{color:var(--dg)}
 </style>
 </head>
 <body>
@@ -123,7 +131,7 @@ const money=n=>Math.round(n).toLocaleString('vi-VN')+' đ';
 let S={products:[],sales:[],customers:[],pays:[],rets:[],tags:['Tiền mặt','Chuyển khoản'],store:'Cửa hàng của tôi',seq:0};
 try{const r=localStorage.getItem('pos_v1');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 function save(k){if(!k)S.mod=Date.now();try{localStorage.setItem('pos_v1',JSON.stringify(S))}catch(e){toast('Không lưu được dữ liệu. Hãy xem cảnh báo ở đầu trang.')}if(!k)bkSoon()}
-let tab='sell',q='',cart={},disc=0,paid='',per='today',cust='',cq='',pimg='',cf='in',rq={},rs=null,rm='cash',ptag=S.lastTag||'',pnote='',pnote2='',payId='',payAmt=null;
+let tab='sell',q='',cart={},disc=0,paid='0',per='today',cust='',cq='',pimg='',cf='in',rq={},rs=null,rm='cash',ptag=S.lastTag||'',pnote='',pnote2='',payId='',payAmt=null;
 const prod=id=>S.products.find(p=>p.id===id);
 const avail=p=>p.od||p.stock===null||p.stock===undefined?Infinity:p.stock;
 const sub=()=>Object.keys(cart).reduce((a,id)=>a+(prod(id)?prod(id).price*cart[id]:0),0);
@@ -138,7 +146,7 @@ function go(t){tab=t;render()}
 function bar(){const n=cnt(),b=$('#cb');b.style.display=n&&tab==='sell'?'flex':'none';b.innerHTML=`<span>${n} món · Xem giỏ hàng</span><b>${money(total())}</b>`}
 function render(){
  $('#sn').textContent=S.store;
- $('#v').innerHTML=sysWarn()+{sell:sellV,prod:prodV,cus:cusV,rep:repV,set:setV}[tab]();
+ $('#v').innerHTML=sysWarn()+(tab==='set'?'':ovBanner())+{sell:sellV,prod:prodV,cus:cusV,rep:repV,set:setV}[tab]();
  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));applyNav();if(tab==='set')loadSnaps();
  bar();
 }
@@ -161,33 +169,33 @@ function chg(id,d){const p=prod(id),n=(cart[id]||0)+d;if(d>0&&n>avail(p)){toast(
  if(n<=0)delete cart[id];else cart[id]=n;
  $('#grid').innerHTML=grid();
  if(!cnt()){closeM();bar()}else openCart()}
-function clearCart(){cart={};disc=0;paid='';cust='';pnote='';ordFrom='';closeM();$('#grid').innerHTML=grid();bar()}
+function clearCart(){cart={};disc=0;paid='0';cust='';pnote='';ordFrom='';closeM();$('#grid').innerHTML=grid();bar()}
 function openCart(){
  const ids=Object.keys(cart);if(!ids.length)return;
- modal(`<h2>Giỏ hàng</h2>`+ids.map(id=>{const p=prod(id);return `<div class="row"><div><b>${esc(p.name)}</b><br><small class="mu">${money(p.price)}</small></div><div class="q"><button onclick="chg('${id}',-1)">−</button><b>${cart[id]}</b><button onclick="chg('${id}',1)">+</button></div></div>`}).join('')+
+ modal(`<h2>Giỏ hàng</h2>`+ids.map(id=>{const p=prod(id);return `<div class="row"><div><b>${esc(p.name)}</b><br><small style="color:var(--ok);font-weight:600">${money(p.price)} × ${cart[id]} = ${money(p.price*cart[id])}</small></div><div class="q"><button onclick="chg('${id}',-1)">−</button><b>${cart[id]}</b><button onclick="chg('${id}',1)">+</button></div></div>`}).join('')+
  `<label>Khách hàng</label>${custRow()}<label>Giảm giá (nghìn đồng, 10 = 10.000)</label><input class="in" type="number" inputmode="decimal" step="any" value="${disc?disc/1000:''}" oninput="disc=Math.round((+this.value||0)*1000);upd()"><div class="mu" id="dsp" style="font-size:13px;margin-top:4px"></div>
- <label>Khách đưa (nghìn đồng, 10 = 10.000)</label><input class="in" type="number" inputmode="decimal" step="any" value="${paid===''?'':paid/1000}" oninput="paid=this.value===''?'':String(Math.round(+this.value*1000));upd()"><div class="mu" id="pdp" style="font-size:13px;margin-top:4px"></div>${tagBox('c')}
- <div class="row"><span>Tổng cộng</span><b id="tt" style="font-size:22px"></b></div>
+ <label>Khách đưa (nghìn đồng, 10 = 10.000)</label><input class="in" type="number" inputmode="decimal" step="any" value="${paid===''?'':paid/1000}" onfocus="this.select()" oninput="paid=this.value===''?'':String(Math.round(+this.value*1000));upd()"><div class="mu" id="pdp" style="font-size:13px;margin-top:4px"></div>${tagBox('c')}
+ <div class="row"><span>Tổng cộng</span><b id="tt" style="font-size:22px;color:var(--ok)"></b></div>
  <div class="row"><span>Thừa / còn nợ</span><b id="ch"></b></div>
  <div class="acts"><button class="btn d" onclick="clearCart()">Xóa giỏ</button><button class="btn p" onclick="pay()">Thanh toán</button></div>`);
  upd();
 }
-function upd(){const t=total();$('#tt').textContent=money(t);$('#dsp').textContent=disc?'= '+money(disc):'';$('#pdp').textContent=paid===''?'':'= '+money(+paid);$('#ch').textContent=paid===''?'—':+paid>=t?ovTxt(+paid-t):(cust&&cdebt(cust)<0?'Trừ số dư ':'Nợ ')+money(t-paid);bar()}
+function upd(){const t=total();$('#tt').textContent=money(t);$('#dsp').textContent=disc?'= '+money(disc):'';$('#pdp').textContent=paid===''?'':'= '+money(+paid);$('#pdp').style.color=paid===''?'':'var(--ok)';$('#ch').style.color=paid===''?'':+paid>=t?'var(--ok)':'var(--dg)';$('#ch').textContent=paid===''?'—':+paid>=t?ovTxt(+paid-t):(cust&&cdebt(cust)<0?'Trừ số dư ':'Nợ ')+money(t-paid);bar()}
 function pay(){
  if(paid!==''&&+paid<total()&&!cust){toast('Khách đưa chưa đủ. Chọn khách hàng nếu muốn ghi nợ');return}
- const items=Object.keys(cart).map(id=>{const p=prod(id);return{id,name:p.name,price:p.price,qty:cart[id]}});
+ const items=Object.keys(cart).map(id=>{const p=prod(id);return{id,name:p.name,price:p.price,cost:p.cost||0,qty:cart[id]}});
  S.seq=(S.seq||0)+1;
  const c=cus(cust);const s={id:uid(),n:S.seq,t:Date.now(),items,cid:c?c.id:'',cn:c?c.name:'',cp:c?c.phone:'',pm:ptag,pn:pnote,dep:ordDepSum(items),dp:c?Math.min(Math.max(0,(paid===''?total():+paid)-total()),Math.max(0,cdebt(c.id))):0,disc,total:total(),paid:paid===''?total():+paid};
  items.forEach(i=>{const p=prod(i.id);if(p&&p.stock!=null&&!p.od)p.stock-=i.qty});
  S.sales.push(s);save();
- cart={};disc=0;paid='';
+ cart={};disc=0;paid='0';
  ordDoneAll(items);cust='';pnote='';S.lastTag=ptag;showRc(s.id,true);render();
 }
 function rcHtml(s){
  return `<div class="rc" id="rc"><div style="text-align:center"><b>${esc(S.store)}</b><br>${dt(s.t)}<br>Hóa đơn #${s.n} (${nI(s)} món)</div>${s.cn?`<div>Khách: ${esc(s.cn)} - ${esc(s.cp)}</div>`:''}<hr>`+
- s.items.map(i=>`<div class="l"><span><b>• ${esc(i.name)}</b><br><span style="opacity:.75;padding-left:14px">${i.qty} × ${money(i.price)}</span></span><span>${money(i.qty*i.price)}</span></div>`).join('')+
- `<hr>`+(s.disc?`<div class="l"><span>Giảm giá</span><span>−${money(s.disc)}</span></div>`:'')+
- `<div class="l"><b>Tổng cộng</b><b>${money(s.total)}</b></div><div class="l"><span>Khách đưa</span><span>${money(s.paid)}</span></div>${s.dep?`<div class="l"><span>Trong đó đã cọc trước</span><span>${money(s.dep)}</span></div>`:''}${s.pm||s.pn?`<div class="l"><span>Nhận tiền</span><span>${esc(s.pm||'')}${s.pn?' · '+esc(s.pn):''}</span></div>`:''}${s.dp?`<div class="l"><span>Trừ vào công nợ cũ</span><span>${money(s.dp)}</span></div>`:''}${s.paid<s.total?`<div class="l"><b>Còn nợ</b><b>${money(s.total-s.paid)}</b></div>`:`<div class="l"><span>Tiền thừa</span><span>${money(s.paid-s.total-(s.dp||0))}</span></div>`}<hr><div style="text-align:center">Cảm ơn quý khách</div></div>`;
+ s.items.map(i=>`<div class="l"><span><b>• ${esc(i.name)}</b><br><span style="opacity:.75;padding-left:14px">${i.qty} × ${money(i.price)}</span></span><span style="color:var(--ok);font-weight:600">${money(i.qty*i.price)}</span></div>`).join('')+
+ `<hr>`+(s.disc?`<div class="l"><span>Giảm giá</span><span style="color:var(--dg)">−${money(s.disc)}</span></div>`:'')+
+ `<div class="l"><b>Tổng cộng</b><b style="color:var(--ok)">${money(s.total)}</b></div><div class="l"><span>Khách đưa</span><span style="color:var(--ok);font-weight:600">${money(s.paid)}</span></div>${s.dep?`<div class="l"><span>Trong đó đã cọc trước</span><span>${money(s.dep)}</span></div>`:''}${s.pm||s.pn?`<div class="l"><span>Nhận tiền</span><span>${esc(s.pm||'')}${s.pn?' · '+esc(s.pn):''}</span></div>`:''}${s.dp?`<div class="l"><span>Trừ vào công nợ cũ</span><span>${money(s.dp)}</span></div>`:''}${s.paid<s.total?`<div class="l"><b style="color:var(--dg)">Còn nợ</b><b style="color:var(--dg)">${money(s.total-s.paid)}</b></div>`:`<div class="l"><span>Tiền thừa</span><span>${money(s.paid-s.total-(s.dp||0))}</span></div>`}<hr><div style="text-align:center">Cảm ơn quý khách</div></div>`;
 }
 function showRc(id,fresh){
  const s=S.sales.find(x=>x.id===id);
@@ -200,7 +208,7 @@ function prodV(){
 }
 function editP(id){if(id)bumpP(id);
  const p=id?prod(id):{name:'',price:'',stock:1,od:cf==='od'};pimg=p.img||'';
- modal(`<h2>${id?'Sửa sản phẩm':'Thêm sản phẩm'}</h2><div id="pv">${pvH()}</div><input type="file" id="pf" accept="image/*" hidden onchange="pickImg(this)"><label>Tên sản phẩm</label><input class="in" id="pn" value="${esc(p.name)}"><label>Giá bán (nghìn đồng, 10 = 10.000)</label><input class="in" id="pp" type="number" inputmode="decimal" step="any" value="${p.price===''?'':p.price/1000}" oninput="$('#pv2').textContent=$('#pp').value===''?'':'= '+money(Math.round(+$('#pp').value*1000))"><div class="mu" id="pv2" style="font-size:13px;margin-top:4px">${p.price===''?'':'= '+money(p.price)}</div><label style="display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink);margin-top:14px"><input type="checkbox" id="pod" class="ckb" ${p.od?'checked':''}> Hàng order (làm trước, hàng chưa về)</label><label>Số lượng tồn kho (để trống nếu không theo dõi)</label><input class="in" id="ps" type="number" inputmode="numeric" value="${p.stock==null?'':p.stock}">
+ modal(`<h2>${id?'Sửa sản phẩm':'Thêm sản phẩm'}</h2><div id="pv">${pvH()}</div><input type="file" id="pf" accept="image/*" hidden onchange="pickImg(this)"><label>Tên sản phẩm</label><input class="in" id="pn" value="${esc(p.name)}"><label>Giá vốn (nghìn đồng, 10 = 10.000)</label><input class="in" id="pcost" type="number" inputmode="decimal" step="any" value="${p.cost?p.cost/1000:''}" placeholder="để trống nếu chưa biết"><div class="mu" id="pcost2" style="font-size:13px;margin:4px 0 0"></div><label>Giá bán (nghìn đồng, 10 = 10.000)</label><input class="in" id="pp" type="number" inputmode="decimal" step="any" value="${p.price===''?'':p.price/1000}" oninput="$('#pv2').textContent=$('#pp').value===''?'':'= '+money(Math.round(+$('#pp').value*1000))"><div class="mu" id="pv2" style="font-size:13px;margin-top:4px">${p.price===''?'':'= '+money(p.price)}</div><label style="display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink);margin-top:14px"><input type="checkbox" id="pod" class="ckb" ${p.od?'checked':''}> Hàng order (làm trước, hàng chưa về)</label>${ptSel(id,p)}<label>Số lượng tồn kho (để trống nếu không theo dõi)</label><input class="in" id="ps" type="number" inputmode="numeric" value="${p.stock==null?'':p.stock}">
  <div class="acts">${id?`<button class="btn d" onclick="delP('${id}')">Xóa</button>`:''}${id?'':`<button class="btn" onclick="saveP('',1)">Lưu & thêm mới</button>`}<button class="btn p" onclick="saveP('${id||''}')">Lưu</button></div>`);
 }
 function saveP(id){
@@ -229,7 +237,7 @@ function cstat(id){const l=S.sales.filter(s=>s.cid===id).sort((a,b)=>b.t-a.t);re
 function cdebt(id,x){return Math.round(S.sales.filter(s=>s.cid===id&&s.id!==x).reduce((a,s)=>a+Math.max(0,s.total-s.paid)-(s.dp||0),0)-(S.pays||[]).filter(p=>p.cid===id).reduce((a,p)=>a+p.amt+(p.ds||0),0)-(S.rets||[]).filter(r=>r.cid===id).reduce((a,r)=>a+r.dc,0))}
 function totalDebt(){return S.customers.reduce((a,c)=>a+Math.max(0,cdebt(c.id)),0)}
 function cusV(){
- return `<div class="stat"><div><small>Tổng khách đã mua</small><b>${money(S.customers.reduce((a,c)=>a+cstat(c.id).sum,0))}</b></div><div onclick="debtL()" style="cursor:pointer"><small>Tổng công nợ ›</small><b style="color:var(--dg)">${money(totalDebt())}</b></div></div><div class="bar"><b>${S.customers.length} khách hàng</b><button class="btn p" onclick="editC()">Thêm</button></div><div class="acts" style="margin:0 0 10px"><button class="btn" onclick="impMenu()">Nhập Excel/CSV</button><button class="btn" onclick="expCus()">Xuất Excel/CSV</button></div><input type="file" id="xf" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange="impCus(this)"><div class="acts" style="margin:0 0 10px;gap:6px"><button class="btn" id="selb" style="padding:12px 10px;white-space:nowrap" onclick="selToggle()">${selM?'Bỏ chọn':'Tự tích'}</button><button class="btn" style="padding:12px 10px;white-space:nowrap" onclick="selAll()">Chọn toàn bộ</button><button class="btn p" id="msgb" style="padding:12px 10px;white-space:nowrap" onclick="msgGo()">Nhắn tin (${sel.size})</button></div>${cusChips()}<div style="position:relative"><input class="in" style="padding-right:60px" placeholder="Tìm theo tên hoặc số điện thoại" value="${esc(cq)}" oninput="cq=this.value;$('#cs').innerHTML=cusL();cqUp()"><span id="cqn" class="qn">${cq.trim()?'('+cusF().length+')':''}</span></div><div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1"><label style="margin:0 0 4px">Đã mua từ (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 5000" value="${cmin>-Infinity?cmin/1000:''}" oninput="cmin=this.value===''?-Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div><div style="flex:1"><label style="margin:0 0 4px">Đến (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 10000" value="${cmax<Infinity?cmax/1000:''}" oninput="cmax=this.value===''?Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div></div><div class="mu" style="font-size:13px;margin:4px 0 6px">10 = 10.000 đ. Muốn lọc khách mua trên 5.000.000: nhập 5000 ở ô Từ, để trống ô Đến.</div><div id="cs">${cusL()}</div>`;
+ return `<div class="stat"><div><small>Tổng khách đã mua</small><b>${money(S.customers.reduce((a,c)=>a+cstat(c.id).sum,0))}</b></div><div onclick="debtL()" style="cursor:pointer"><small>Tổng công nợ ›</small><b style="color:var(--dg)">${money(totalDebt())}</b></div></div><div class="bar"><b>${S.customers.length} khách hàng</b><button class="btn p" onclick="editC()">Thêm</button></div><div class="acts" style="margin:0 0 10px"><button class="btn" onclick="impMenu()">Nhập Excel/CSV</button><button class="btn" onclick="expCus()">Xuất Excel/CSV</button></div><input type="file" id="xf" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange="impCus(this)"><div class="acts" style="margin:0 0 10px;gap:6px"><button class="btn" id="selb" style="padding:12px 10px;white-space:nowrap" onclick="selToggle()">${selM?'Bỏ chọn':'Tự chọn'}</button><button class="btn" style="padding:12px 10px;white-space:nowrap" onclick="selAll()">Chọn toàn bộ</button><button class="btn p" id="msgb" style="padding:12px 10px;white-space:nowrap" onclick="msgGo()">Nhắn tin (${sel.size})</button></div>${cusChips()}<div style="position:relative"><input class="in" style="padding-right:60px" placeholder="Tìm theo tên hoặc số điện thoại" value="${esc(cq)}" oninput="cq=this.value;$('#cs').innerHTML=cusL();cqUp()"><span id="cqn" class="qn">${cq.trim()?'('+cusF().length+')':''}</span></div><div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1"><label style="margin:0 0 4px">Đã mua từ (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 5000" value="${cmin>-Infinity?cmin/1000:''}" oninput="cmin=this.value===''?-Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div><div style="flex:1"><label style="margin:0 0 4px">Đến (nghìn đồng)</label><input class="in" type="number" inputmode="decimal" step="any" placeholder="vd 10000" value="${cmax<Infinity?cmax/1000:''}" oninput="cmax=this.value===''?Infinity:Math.round(+this.value*1000);$('#cs').innerHTML=cusL()"></div></div><div class="mu" style="font-size:13px;margin:4px 0 6px">10 = 10.000 đ. Muốn lọc khách mua trên 5.000.000: nhập 5000 ở ô Từ, để trống ô Đến.</div><div id="cs">${cusL()}</div>`;
 }
 function cusL(){
  if(!S.customers.length)return '<div class="empty">Chưa có khách hàng. Bấm Thêm để lưu tên và số điện thoại.</div>';
@@ -241,7 +249,7 @@ function cusD(id){bumpC(id);ordSel.clear();
  const c=cus(id),t=cstat(id),d=cdebt(id);
  const ev=[...t.l.map(s=>({t:s.t,s})),...(S.pays||[]).filter(p=>p.cid===id).map(p=>({t:p.t,p})),...(S.rets||[]).filter(r=>r.cid===id).map(r=>({t:r.t,r}))].sort((a,b)=>b.t-a.t).slice(0,40);
  modal(`<h2>${esc(c.name)}</h2><div class="mu">${phs(c)}${c.addr?'<br>Địa chỉ: '+esc(c.addr):''}${c.note?'<br>'+esc(c.note):''}${c.note2?'<br>'+esc(c.note2):''}${c.bd?'<br>Sinh nhật: '+c.bd.split('-').reverse().join('/'):''}</div><div class="stat"><div><small>Tổng đã mua</small><b>${money(t.sum)}</b></div><div><small>Số lần mua</small><b>${t.n} <span class="mu" style="font-size:15px;font-weight:400">(${t.q} món)</span></b></div><div class="w"><small>${d<0?'Số dư (tiền khách còn ở cửa hàng)':'Công nợ'}</small><b style="color:${d>0?'var(--dg)':d<0?'var(--ac)':'var(--ink)'}">${d<0?'+':''}${money(Math.abs(d))}</b></div></div>`+
- ordOf(id)+(`<button class="btn p" style="width:100%" onclick="payD('${id}')">Khách trả tiền</button>`)+
+ ordOf(id)+(`<div style="border-top:1px solid var(--ln);margin:20px 0 16px"></div><button class="btn p" style="width:100%" onclick="payD('${id}')">Khách trả tiền</button><div style="margin:22px 0 4px;font-size:16px"><b>Lịch sử mua hàng</b></div>`)+
  (ev.length?ev.map(e=>e.s?`<button class="row" onclick="showRc('${e.s.id}')"><div><b>Hóa đơn #${e.s.n}</b><span class="mu"> (${nI(e.s)} món)</span><br><small class="mu">${dt(e.s.t)}${e.s.paid<e.s.total?' · nợ '+money(e.s.total-e.s.paid):''}</small></div><b>${money(e.s.total)}</b></button>`:e.r?`<div class="row"><div><b>Hoàn hàng (HĐ #${e.r.n})</b><br><small class="mu">${dt(e.r.t)}</small></div><b>−${money(e.r.amt)}</b></div>`:`<div class="row"><div><b>Khách trả tiền</b><br><small class="mu">${dt(e.p.t)}${e.p.pm?' · '+esc(e.p.pm):''}${e.p.ds?' · giảm giá '+money(e.p.ds):''}</small></div><b>−${money(e.p.amt+(e.p.ds||0))}</b></div>`).join(''):'<div class="empty">Chưa có lần mua nào.</div>')+
  `<div class="acts"><button class="btn" onclick="closeM()">Đóng</button><a class="btn" style="text-decoration:none" href="tel:${esc(c.phone)}">Gọi</a><button class="btn p" onclick="editC('${id}')">Sửa</button></div>`);
 }
@@ -486,20 +494,42 @@ function chartH(){
  }
  return `<div class="stat"><div class="w" style="padding-bottom:6px"><small>Doanh thu 12 tháng gần nhất (số trên cột: triệu đồng, số dưới cột: tháng)</small><svg viewBox="0 0 336 150" width="100%" role="img" aria-label="Biểu đồ doanh thu theo tháng">${bars}</svg></div></div>${rows}<p class="mu" style="font-size:13px">Tháng hiện tại mới tính đến hôm nay nên có thể thấp hơn tháng trước.</p>`;
 }
+function costOf(i){return i.cost!=null?i.cost:((prod(i.id)||{}).cost||0)}
+function retCost(r){const s=S.sales.find(x=>x.id===r.sid);return r.items.reduce((a,i)=>{const si=s&&s.items.find(x=>x.id===i.id);return a+i.qty*(si?costOf(si):costOf(i))},0)}
+function topList(l,rl,n){
+ const m={};
+ l.forEach(s=>{if(!s.cid)return;const x=m[s.cid]||(m[s.cid]={id:s.cid,name:s.cn,phone:s.cp,sum:0,n:0,q:0});x.sum+=s.total;x.n++;x.q+=nI(s);if(s.cn)x.name=s.cn});
+ rl.forEach(r=>{const x=m[r.cid];if(x){x.sum-=r.amt;x.q-=r.items.reduce((a,i)=>a+i.qty,0)}});
+ return Object.values(m).sort((a,b)=>b.sum-a.sum).slice(0,n);
+}
+const TOPS=[5,10,20,50,100];
+function setTop(n){S.topN=n;save(true);render()}
+function topRow(x,i){const c=cus(x.id),ph=x.phone||(c&&c.phone)||'';return `<button class="row" onclick="cusD('${x.id}')" style="align-items:flex-start"><span class="mu" style="min-width:26px;font-weight:700;font-variant-numeric:tabular-nums">${i+1}.</span><div style="flex:1;min-width:0"><b>${esc(x.name||(c&&c.name)||'')}</b><br><small class="mu">${esc(ph)}${ph?' · ':''}${x.n} hóa đơn · ${x.q} món</small></div><b style="color:var(--ok);white-space:nowrap">${money(x.sum)}</b></button>`}
+function topCusH(){
+ const n=new Date(),f=new Date(n.getFullYear(),n.getMonth(),1).getTime(),e=new Date(n.getFullYear(),n.getMonth()+1,1).getTime();
+ const t=topList(S.sales.filter(s=>s.t>=f&&s.t<e),(S.rets||[]).filter(r=>r.t>=f&&r.t<e),5);
+ return `<h2 style="font-size:16px;margin:18px 0 0">Top 5 khách mua nhiều nhất tháng ${n.getMonth()+1}/${n.getFullYear()}</h2>`+(t.length?t.map(topRow).join(''):'<div class="empty" style="padding:16px 0">Tháng này chưa có khách hàng nào mua</div>')+`<button class="btn" style="width:100%;margin:10px 0 4px" onclick="topM(10)">Xem top 10, 20, 50, 100 trong kỳ đang chọn ›</button>`;
+}
+function topM(n){
+ if(n)S.topN=n,save(true);
+ n=TOPS.includes(S.topN)?S.topN:5;
+ const l=S.sales.filter(s=>s.t>=RF&&s.t<RT),rl=(S.rets||[]).filter(r=>r.t>=RF&&r.t<RT),t=topList(l,rl,n);
+ modal(`<h2>Khách mua nhiều nhất trong kỳ</h2><div class="chips" style="margin:8px 0 4px;flex-wrap:wrap;overflow:visible">${TOPS.map(k=>`<button class="chip ${k===n?'on':''}" onclick="topM(${k})">Top ${k}</button>`).join('')}</div>`+(t.length?t.map(topRow).join('')+(t.length<n?`<div class="mu" style="font-size:13px;margin:6px 0">Trong kỳ này chỉ có ${t.length} khách hàng đã mua.</div>`:''):'<div class="empty" style="padding:16px 0">Chưa có khách hàng nào mua trong kỳ này</div>')+`<div class="acts"><button class="btn p" style="flex:1" onclick="closeM()">Đóng</button></div>`);
+}
 function repV(){if(per==='daily')return dailyV();if(per==='pm')return perSel()+pmMonthV();if(per==='chart')return perSel()+chartH();
  const now=new Date(),d0=new Date().setHours(0,0,0,0);
  if(per==='range'&&!rf&&!rt){const z=n=>String(n).padStart(2,'0');rf=rt=now.getFullYear()+'-'+z(now.getMonth()+1)+'-'+z(now.getDate())}
  const from=per==='range'?(rf?new Date(rf+'T00:00:00').getTime():0):{yesterday:d0-864e5,today:d0,'7d':d0-6*864e5,month:new Date(now.getFullYear(),now.getMonth(),1).getTime(),all:0}[per],to=per==='yesterday'?d0:per==='range'&&rt?new Date(rt+'T23:59:59.999').getTime()+1:Infinity;RF=from;RT=to;
  const l=S.sales.filter(s=>s.t>=from&&s.t<to).sort((a,b)=>b.t-a.t);
- const rl=(S.rets||[]).filter(r=>r.t>=from&&r.t<to),ra=rl.reduce((a,r)=>a+r.amt,0),rev=l.reduce((a,s)=>a+s.total,0)-ra,it=l.reduce((a,s)=>a+s.items.reduce((x,i)=>x+i.qty,0),0)-rl.reduce((a,r)=>a+r.items.reduce((x,i)=>x+i.qty,0),0);
+ const rl=(S.rets||[]).filter(r=>r.t>=from&&r.t<to),ra=rl.reduce((a,r)=>a+r.amt,0),rev=l.reduce((a,s)=>a+s.total,0)-ra,cg=l.reduce((a,s)=>a+s.items.reduce((x,i)=>x+i.qty*costOf(i),0),0)-rl.reduce((a,r)=>a+retCost(r),0),nc=l.reduce((a,s)=>a+s.items.filter(i=>!costOf(i)).length,0),it=l.reduce((a,s)=>a+s.items.reduce((x,i)=>x+i.qty,0),0)-rl.reduce((a,r)=>a+r.items.reduce((x,i)=>x+i.qty,0),0);
  return `${perSel()}${per==='range'?rangeUI():''}
- <div class="stat"><div class="w"><small>Doanh thu (đã trừ hàng hoàn)</small><b>${money(rev)}</b></div><div onclick="repList('inv')" style="cursor:pointer"><small>Số hóa đơn ›</small><b>${l.length}</b></div><div onclick="repList('item')" style="cursor:pointer"><small>Số món đã bán ›</small><b>${it}</b></div><div onclick="repList('ret')" style="cursor:pointer"><small>Số lần hoàn hàng ›</small><b>${rl.length}</b></div><div onclick="repList('ret')" style="cursor:pointer"><small>Tiền đã hoàn ›</small><b>${money(ra)}</b></div><div><small>Giá trị hàng còn</small><b>${fmT(invVal('in'))}</b></div><div><small>Giá trị hàng order</small><b>${fmT(invVal('od'))}</b></div><div class="w" onclick="debtL()" style="cursor:pointer"><small>Tổng công nợ khách hàng ›</small><b style="color:var(--dg)">${money(totalDebt())}</b></div></div>${pmRep(from,l)}`+
- (l.length?l.slice(0,60).map(s=>`<button class="row" onclick="showRc('${s.id}')"><div><b>Hóa đơn #${s.n}</b><span class="mu"> (${nI(s)} món)</span><br><small class="mu">${dt(s.t)}${s.cn?' · '+esc(s.cn)+(s.cp?' · '+esc(s.cp):''):''}${s.cid&&s.paid<s.total?' · nợ '+money(s.total-s.paid):''}${hasRet(s.id)?' · có hoàn hàng':''}</small></div><b>${money(s.total)}</b></button>`).join(''):'<div class="empty">Chưa có hóa đơn trong khoảng này.</div>')+(rl.length?`<h2 style="font-size:16px;margin:18px 0 0">Hoàn hàng</h2>`+rl.sort((a,b)=>b.t-a.t).slice(0,30).map(r=>`<div class="row"><div><b>Hoàn hóa đơn #${r.n}</b><br><small class="mu">${dt(r.t)}${rcus(r)} · ${r.items.map(i=>esc(i.name)+' ×'+i.qty).join(', ')}</small></div><b style="color:var(--dg)">−${money(r.amt)}</b></div>`).join(''):'');
+ <div class="stat"><div class="w"><small>Doanh thu (đã trừ hàng hoàn)</small><b style="color:var(--ok)">${money(rev)}</b></div><div><small>Giá vốn</small><b>${money(cg)}</b></div><div><small>Lợi nhuận gộp</small><b style="color:${rev-cg<0?'var(--dg)':'var(--ok)'}">${money(rev-cg)}</b></div>${nc?`<div class="w"><small style="color:var(--or)">${nc} dòng hàng chưa có giá vốn nên lợi nhuận có thể cao hơn thực tế. Hãy nhập giá vốn ở tab Sản phẩm.</small></div>`:''}<div onclick="repList('inv')" style="cursor:pointer"><small>Số hóa đơn ›</small><b>${l.length}</b></div><div onclick="repList('item')" style="cursor:pointer"><small>Số món đã bán ›</small><b>${it}</b></div><div onclick="repList('ret')" style="cursor:pointer"><small>Số lần hoàn hàng ›</small><b>${rl.length}</b></div><div onclick="repList('ret')" style="cursor:pointer"><small>Tiền đã hoàn ›</small><b style="color:${ra?'var(--dg)':'inherit'}">${money(ra)}</b></div><div class="w" onclick="debtL()" style="cursor:pointer"><small>Tổng công nợ khách hàng ›</small><b style="color:var(--dg)">${money(totalDebt())}</b></div></div>${invRep()}${topCusH()}${pmRep(from,l)}`+
+ (l.length?l.slice(0,60).map(s=>`<button class="row" onclick="showRc('${s.id}')"><div><b>Hóa đơn #${s.n}</b><span class="mu"> (${nI(s)} món)</span><br><small class="mu">${dtc(s.t)}${cnc(s)}${s.cid&&s.paid<s.total?' · nợ '+money(s.total-s.paid):''}${hasRet(s.id)?' · có hoàn hàng':''}</small></div><b style="white-space:nowrap">${money(s.total)}</b></button>`).join(''):'<div class="empty">Chưa có hóa đơn trong khoảng này.</div>')+(rl.length?`<h2 style="font-size:16px;margin:18px 0 0">Hoàn hàng</h2>`+rl.sort((a,b)=>b.t-a.t).slice(0,30).map(r=>`<div class="row"><div><b>Hoàn hóa đơn #${r.n}</b><br><small class="mu">${dtc(r.t)}${rcus(r)} · ${r.items.map(i=>esc(i.name)+' ×'+i.qty).join(', ')}</small></div><b style="color:var(--dg)">−${money(r.amt)}</b></div>`).join(''):'');
 }
 /* Cài đặt */
 function setV(){
  return `<label>Tên cửa hàng (hiện trên hóa đơn)</label><input class="in" value="${esc(S.store)}" onchange="S.store=this.value.trim()||'Cửa hàng';save();render()">
- <label>Khách VIP: tổng mua từ (nghìn đồng, 10 = 10.000)</label><input class="in" type="number" inputmode="decimal" step="any" value="${vipT()/1000}" onchange="S.vip=Math.round((+this.value||0)*1000)||20000000;save();render()"><label>Tên khách hàng</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="normAll()">Chuẩn hóa tên toàn bộ khách</button></div><label>Thứ tự các nút</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="sortUI()">Sắp xếp thứ tự các nút và tab</button></div><label>Tag cách nhận tiền</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="tagMgr()">Quản lý tag (${S.tags.length})</button></div><label>Nhắc sao lưu ra Tệp / iCloud</label><div class="chips" style="flex-wrap:wrap;overflow:visible">${[['day','Mỗi ngày'],['week','Mỗi tuần'],['month','Mỗi tháng'],['off','Tắt nhắc']].map(o=>`<button class="chip ${(S.bkf||'day')===o[0]?'on':''}" onclick="S.bkf='${o[0]}';save(true);render()">${o[1]}</button>`).join('')}</div><label>Sao lưu và khôi phục dữ liệu</label><textarea class="in" id="bk" placeholder="Dán dữ liệu sao lưu dạng văn bản vào đây rồi bấm Khôi phục từ văn bản"></textarea>
+ <label>Khách VIP: tổng mua từ (nghìn đồng, 10 = 10.000)</label><input class="in" type="number" inputmode="decimal" step="any" value="${vipT()/1000}" onchange="S.vip=Math.round((+this.value||0)*1000)||20000000;save();render()"><label>Báo đơn order chưa có hàng sau (số ngày)</label><input class="in" type="number" inputmode="numeric" min="1" value="${OVDf()}" onfocus="this.select()" onchange="S.ovd=Math.max(1,Math.round(+this.value||7));save();render()"><label>Tên khách hàng</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="normAll()">Chuẩn hóa tên toàn bộ khách</button></div><label>Thứ tự các nút</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="sortUI()">Sắp xếp thứ tự các nút và tab</button></div><label>Tag cách nhận tiền</label><div class="acts" style="margin-top:0"><button class="btn" style="flex:1" onclick="tagMgr()">Quản lý tag (${S.tags.length})</button></div><label>Nhắc sao lưu ra Tệp / iCloud</label><div class="chips" style="flex-wrap:wrap;overflow:visible">${[['day','Mỗi ngày'],['week','Mỗi tuần'],['month','Mỗi tháng'],['off','Tắt nhắc']].map(o=>`<button class="chip ${(S.bkf||'day')===o[0]?'on':''}" onclick="S.bkf='${o[0]}';save(true);render()">${o[1]}</button>`).join('')}</div><label>Sao lưu và khôi phục dữ liệu</label><textarea class="in" id="bk" placeholder="Dán dữ liệu sao lưu dạng văn bản vào đây rồi bấm Khôi phục từ văn bản"></textarea>
  <div class="acts"><button class="btn p" onclick="doBackup()">Sao lưu ra file</button><button class="btn" onclick="$('#bf').click()">Khôi phục từ file</button></div><input type="file" id="bf" accept=".json,application/json" hidden onchange="pickFile(this)">
  <div class="acts"><button class="btn" onclick="exportB()">Sao chép dạng văn bản</button><button class="btn" onclick="importB()">Khôi phục từ văn bản</button></div>
  <p class="mu" style="font-size:13px">${S.bk?'Lần sao lưu gần nhất: '+dt(S.bk):'Chưa sao lưu ra ngoài lần nào.'}</p><p class="mu" style="font-size:13px">Nơi lưu dữ liệu: ${esc(location.host||'tệp cục bộ')} · ${matchMedia('(display-mode: standalone)').matches?'đang chạy như app trên màn hình chính':'đang chạy trong trình duyệt'}</p>
@@ -740,12 +770,12 @@ function chips(wo){
  const od=S.products.filter(p=>p.od).length,n=S.products.filter(p=>!p.od&&avail(p)>0).length,o=S.products.length-n-od;
  return `<div class="chips"><button class="chip ${cf==='out'||(wo&&cf==='od')?'':'on'}" onclick="setCat('in')">Còn hàng (${n})</button><button class="chip ${cf==='out'?'on':''}" onclick="setCat('out')">Hết hàng (${o})</button>${wo?`<button class="chip ${cf==='od'?'on':''}" onclick="setCat('od')">Hàng order (${od})</button>`:''}</div>`;
 }
-function odDone(id){const p=prod(id);if(!p)return;p.od=false;if(p.stock!=null&&p.stock<=0)p.stock=1;save();toast('Đã chuyển sang Còn hàng');render()}
+function odDone(id){const p=prod(id);if(!p)return;p.od=false;if(p.stock!=null&&p.stock<=0)p.stock=1;save();toast('Đã chuyển sang Hàng về');render()}
 function plist(){
  if(!S.products.length)return '<div class="empty">Bấm Thêm để tạo sản phẩm đầu tiên.</div>';
  const l=pl().filter(p=>nz(p.name).includes(nz(pq)));
  if(!l.length)return '<div class="empty">Không có sản phẩm nào trong mục này.</div>';
- return l.map(p=>`<div class="row" onclick="editP('${p.id}')">${p.od?`<input type="checkbox" class="ckb" onclick="event.stopPropagation()" onchange="odDone('${p.id}')" aria-label="Đã có hàng">`:''}${p.img?`<img class="th" src="${p.img}" alt="">`:''}<div style="flex:1"><b>${esc(p.name)}</b><br><small class="mu">${p.od?'Hàng order · tích ô bên trái khi hàng về':p.stock==null?'Không theo dõi kho':'Tồn kho: '+p.stock}${!p.od&&ordN(p.id)?' · '+ordN(p.id)+' khách đặt chờ nhận':''}</small>${p.od?`<br><button class="btn" style="padding:6px 10px;margin-top:6px" onclick="event.stopPropagation();ordMgr('${p.id}')">Khách đặt (${ordN(p.id)})</button>`:''}</div><b>${money(p.price)}</b><button class="btn d" style="padding:8px 10px" onclick="event.stopPropagation();delP('${p.id}')">Xóa</button></div>`).join('');
+ return l.map(p=>`<div class="row" onclick="editP('${p.id}')">${p.od?`<input type="checkbox" class="ckb" onclick="event.stopPropagation()" onchange="odDone('${p.id}')" aria-label="Đã có hàng">`:''}${p.img?`<img class="th" src="${p.img}" alt="">`:''}<div style="flex:1"><b>${esc(p.name)}</b><br><small class="mu">${p.od?'Hàng order · chọn ô bên trái khi hàng về':p.stock==null?'Không theo dõi kho':'Tồn kho: '+p.stock}${!p.od&&ordN(p.id)?' · '+ordN(p.id)+' khách đặt chờ nhận':''}${p.cost?' · vốn '+money(p.cost):''}</small>${p.od?`<br><button class="btn" style="padding:6px 10px;margin-top:6px" onclick="event.stopPropagation();ordMgr('${p.id}')">Khách đặt (${ordN(p.id)})</button>`:''}</div><b>${money(p.price)}</b><button class="btn d" style="padding:8px 10px" onclick="event.stopPropagation();delP('${p.id}')">Xóa</button></div>`).join('');
 }
 function cusL(){
  if(!S.customers.length)return '<div class="empty">Chưa có khách hàng. Bấm Thêm để lưu tên và số điện thoại.</div>';
@@ -773,7 +803,7 @@ function selAll(){cusF().forEach(x=>sel.add(x.c.id));$('#cs').innerHTML=cusL();s
 function selNone(){sel.clear();$('#cs').innerHTML=cusL();selUp()}
 function msgOpen(){
  const n=[...sel].filter(id=>cus(id)).length;
- if(!n){toast('Hãy tích chọn khách cần nhắn');return}
+ if(!n){toast('Hãy chọn khách cần nhắn');return}
  modal(`<h2>Nhắn tin cho ${n} khách</h2><label>Gửi qua</label><div class="chips" style="flex-wrap:wrap;overflow:visible"><button class="chip ${msgCh==='sms'?'on':''}" onclick="msgCh='sms';msgOpen()">Tin nhắn SMS</button><button class="chip ${msgCh==='zalo'?'on':''}" onclick="msgCh='zalo';msgOpen()">Zalo</button></div><label>Nội dung (gõ {ten} để chèn tên khách)</label><textarea class="in" style="min-height:110px;font-size:15px" oninput="S.msgT=this.value" placeholder="Chào {ten}, shop có hàng mới về...">${esc(S.msgT||'')}</textarea><div class="mu" style="font-size:13px;margin-top:6px">${msgCh==='sms'?'App mở sẵn tin nhắn cho từng khách, bạn bấm Gửi trong ứng dụng Tin nhắn rồi quay lại đây.':'App sao chép nội dung và mở Zalo của từng khách, bạn dán vào rồi gửi.'} Mỗi khách nhận một tin riêng, không lộ số điện thoại của nhau. Chỉ nhắn khách đã đồng ý nhận tin.</div><div class="acts"><button class="btn" onclick="closeM()">Hủy</button><button class="btn p" onclick="msgStart()">Bắt đầu gửi</button></div>`);
 }
 function msgStart(){
@@ -893,7 +923,7 @@ function odDone(id){
  const p=prod(id);if(!p)return;
  p.od=false;if(p.stock!=null&&p.stock<=0)p.stock=1;save();render();
  const w=OR().filter(o=>o.pid===id&&o.st!=='done');
- if(!w.length){toast('Đã chuyển sang Còn hàng');return}
+ if(!w.length){toast('Đã chuyển sang Hàng về');return}
  modal(`<h2>Hàng đã về: ${esc(p.name)}</h2><div class="mu">${w.length} khách đã đặt, tổng cọc ${money(w.reduce((a,o)=>a+o.dep,0))}. Báo cho khách ngay?</div>`+w.map(o=>{const c=cus(o.cid);return `<div class="row"><div><b>${c?esc(c.name):'?'} × ${o.qty}</b><br><small class="mu">${c?esc(c.phone):''}${o.dep?' · cọc '+money(o.dep):''}</small></div></div>`}).join('')+`<div class="acts"><button class="btn" onclick="closeM()">Để sau</button><button class="btn p" onclick="ordNotify('${id}')">Nhắn tin báo khách</button></div>`);
 }
 function ordNotify(pid){
@@ -905,7 +935,7 @@ const TPL={no:'Chào {ten}, shop xin nhắc anh/chị còn khoản {no} chưa th
 function msgOpen(k){
  if(!k)msgCtx={};
  const n=[...sel].filter(id=>cus(id)).length;
- if(!n){toast('Hãy tích chọn khách cần nhắn');return}
+ if(!n){toast('Hãy chọn khách cần nhắn');return}
  if(!k&&!(S.msgT||'').trim()){const f={debt:'no',bd:'sn',old:'lm'}[cfl];if(f)S.msgT=TPL[f]}
  modal(`<h2>Nhắn tin cho ${n} khách</h2><label>Gửi qua</label><div class="chips" style="flex-wrap:wrap;overflow:visible"><button class="chip ${msgCh==='sms'?'on':''}" onclick="msgCh='sms';msgOpen(1)">Tin nhắn SMS</button><button class="chip ${msgCh==='zalo'?'on':''}" onclick="msgCh='zalo';msgOpen(1)">Zalo</button></div><label>Mẫu nhanh</label><div class="chips" style="flex-wrap:wrap;overflow:visible">${[['no','Nhắc nợ'],['sn','Sinh nhật'],['hv','Hàng về'],['lm','Lâu chưa mua']].map(o=>`<button class="chip" onclick="S.msgT=TPL['${o[0]}'];msgOpen(1)">${o[1]}</button>`).join('')}</div><label>Nội dung ({ten} = tên khách, {no} = số tiền nợ, {sp} = tên sản phẩm)</label><textarea class="in" style="min-height:110px;font-size:15px" oninput="S.msgT=this.value" placeholder="Chào {ten}, shop có hàng mới về...">${esc(S.msgT||'')}</textarea><div class="mu" style="font-size:13px;margin-top:6px">${msgCh==='sms'?'App mở sẵn tin nhắn cho từng khách, bạn bấm Gửi trong ứng dụng Tin nhắn rồi quay lại đây.':'App sao chép nội dung và mở Zalo của từng khách, bạn dán vào rồi gửi.'} Mỗi khách nhận một tin riêng. Chỉ nhắn khách đã đồng ý nhận tin.</div><div class="acts"><button class="btn" onclick="closeM()">Hủy</button><button class="btn p" onclick="msgStart()">Bắt đầu gửi</button></div>`);
 }
@@ -1036,12 +1066,12 @@ function ordDel(id,pid){
 (function(){try{const d=S.deps||(S.deps=[]);OR().forEach(x=>{if(x.dep>0&&x.st!=='done'&&!d.some(e=>e.oid===x.id))d.push({id:uid(),oid:x.id,t:x.t,pm:x.dpm||'',v:x.dep,cid:x.cid,pn:x.note||''})})}catch(e){}})();
 const allPh=c=>[c.phone,...(c.ex||[])].filter(Boolean);
 (function(){try{S.customers.forEach(c=>{if(c.p2||c.p3){c.ex=[...(c.ex||[]),c.p2,c.p3].filter(Boolean);delete c.p2;delete c.p3}})}catch(e){}})();
-function selUp(){const b=$('#msgb');if(b)b.textContent='Nhắn tin ('+sel.size+')';const s=$('#selb');if(s)s.textContent=selM?'Bỏ chọn':'Tự tích'}
+function selUp(){const b=$('#msgb');if(b)b.textContent='Nhắn tin ('+sel.size+')';const s=$('#selb');if(s)s.textContent=selM?'Bỏ chọn':'Tự chọn'}
 function msgGo(){
  if([...sel].filter(id=>cus(id)).length){msgOpen();return}
  const t=cusF().length;
  if(!t){toast('Không có khách nào để nhắn');return}
- modal(`<h2>Nhắn tin cho ai?</h2><div class="mu" style="font-size:13px">Bạn chưa chọn khách nào.</div><div style="display:grid;gap:8px;margin-top:10px"><button class="btn p" onclick="closeM();selM=true;$('#cs').innerHTML=cusL();selUp();toast('Chạm vào từng khách để tích chọn')">1. Tự tích chọn khách</button><button class="btn" onclick="closeM();selAll();msgOpen()">2. Chọn toàn bộ (${t} khách đang hiện)</button><button class="btn" onclick="closeM()">Hủy</button></div>`);
+ modal(`<h2>Nhắn tin cho ai?</h2><div class="mu" style="font-size:13px">Bạn chưa chọn khách nào.</div><div style="display:grid;gap:8px;margin-top:10px"><button class="btn p" onclick="closeM();selM=true;$('#cs').innerHTML=cusL();selUp();toast('Chạm vào từng khách để chọn')">1. Tự chọn khách</button><button class="btn" onclick="closeM();selAll();msgOpen()">2. Chọn toàn bộ (${t} khách đang hiện)</button><button class="btn" onclick="closeM()">Hủy</button></div>`);
 }
 function splitPh(v){
  const out=[];
@@ -1140,10 +1170,9 @@ function ordSearch(){
 }
 function ordPick(id){ordC=id;const c=cus(id);$('#osel').innerHTML='<b>Đã chọn: '+esc(c.name)+' · '+esc(c.phone)+'</b>'}
 function ordAdd(pid){
- if(!S.customers.length){toast('Hãy thêm khách hàng trước ở tab Khách hàng');return}
  if(!dtag)dtag=ptag||'';
  ordC='';
- modal(`<h2>Thêm khách đặt</h2><label>Khách hàng</label><div id="osel" class="mu" style="font-size:15px;margin-bottom:6px">Chưa chọn khách</div><input class="in" id="osq" placeholder="Tìm khách theo tên hoặc số điện thoại" oninput="ordSearch()"><div id="osl" style="max-height:210px;overflow:auto"></div><label>Số lượng</label><input class="in" id="oq" type="number" inputmode="numeric" value="1"><label>Tiền cọc (nghìn đồng, 10 = 10.000)</label><input class="in" id="odp" type="number" inputmode="decimal" step="any" placeholder="để trống nếu chưa cọc"><label>Nhận tiền cọc qua (tag tài khoản)</label><div class="chips" id="dtg" style="flex-wrap:wrap;overflow:visible">${S.tags.map((t,i)=>`<button class="chip ${dtag===t?'on':''}" onclick="pickDt(${i})">${esc(t)}</button>`).join('')}</div><label>Ghi chú (size, màu...)</label><input class="in" id="onn" placeholder="vd: size M, màu đen"><div class="acts"><button class="btn" onclick="ordMgr('${pid}')">Hủy</button><button class="btn p" onclick="ordSave('${pid}')">Lưu</button></div>`);
+ modal(`<h2>Thêm khách đặt</h2><label>Khách hàng</label><div id="osel" class="mu" style="font-size:15px;margin-bottom:6px">Chưa chọn khách</div><input class="in" id="osq" placeholder="Tìm khách theo tên hoặc số điện thoại" oninput="ordSearch()"><div id="osl" style="max-height:210px;overflow:auto"></div><button class="btn" style="margin-top:8px;width:100%" onclick="ordNewC(\'${pid}\')">+ Thêm khách mới</button><label>Số lượng</label><input class="in" id="oq" type="number" inputmode="numeric" value="1"><label>Tiền cọc (nghìn đồng, 10 = 10.000)</label><input class="in" id="odp" type="number" inputmode="decimal" step="any" placeholder="để trống nếu chưa cọc"><label>Nhận tiền cọc qua (tag tài khoản)</label><div class="chips" id="dtg" style="flex-wrap:wrap;overflow:visible">${S.tags.map((t,i)=>`<button class="chip ${dtag===t?'on':''}" onclick="pickDt(${i})">${esc(t)}</button>`).join('')}</div><label>Ghi chú (size, màu...)</label><input class="in" id="onn" placeholder="vd: size M, màu đen"><div class="acts"><button class="btn" onclick="ordMgr('${pid}')">Hủy</button><button class="btn p" onclick="ordSave('${pid}')">Lưu</button></div>`);
  ordSearch();
 }
 function ordSave(pid){
@@ -1155,19 +1184,20 @@ function ordSave(pid){
  save();render();ordMgr(pid);
 }
 function editC(id,fc){
- const c=id?cus(id):{name:'',phone:'',note:'',note2:'',addr:'',bd:'',ex:[]};
- modal(`<h2>${id?'Sửa khách hàng':'Thêm khách hàng'}</h2><label>Tên khách hàng</label><input class="in" id="cn" autocapitalize="words" value="${esc(c.name)}" oninput="if(!event.isComposing)fmtName(this)" onblur="fmtName(this,1)"><label>Số điện thoại (10 số)</label><input class="in" id="cph" type="tel" inputmode="tel" value="${esc(c.phone)}"><div id="exw">${(c.ex||[]).map(exRow).join('')}</div><button class="btn" style="margin-top:8px" onclick="addPh()">+ Thêm số điện thoại</button><label>Ngày sinh (không bắt buộc)</label><div style="display:flex;gap:8px"><input class="in" type="date" id="cbd" value="${c.bd||''}" style="flex:1;min-width:0"><button class="btn" style="padding:8px 12px;white-space:nowrap" onclick="$('#cbd').value=''">Bỏ ngày sinh</button></div><label>Địa chỉ</label><input class="in" id="cadr" value="${esc(c.addr||'')}"><label>Ghi chú</label><input class="in" id="cnote" value="${esc(c.note||'')}"><label>Ghi chú 2</label><input class="in" id="cnote2" value="${esc(c.note2||'')}"><div class="acts">${id?`<button class="btn d" onclick="delC('${id}')">Xóa</button>`:`<button class="btn" onclick="${fc?'pickC()':'closeM()'}">Hủy</button>`}<button class="btn p" onclick="saveC('${id||''}',${fc?1:0})">Lưu</button></div>`);
+ const c=id?cus(id):{name:'Kh - ',phone:'',note:'',note2:'',addr:'',bd:'',ex:[]};
+ modal(`<h2>${id?'Sửa khách hàng':'Thêm khách hàng'}</h2><label>Tên khách hàng</label><input class="in" id="cn" autocapitalize="words" value="${esc(c.name)}" oninput="if(!event.isComposing)fmtName(this)" onblur="fmtName(this,1)"><label>Số điện thoại (10 số)</label><input class="in" id="cph" type="tel" inputmode="tel" value="${esc(c.phone)}"><div id="exw">${(c.ex||[]).map(exRow).join('')}</div><button class="btn" style="margin-top:8px" onclick="addPh()">+ Thêm số điện thoại</button><label>Ngày sinh (không bắt buộc)</label><div style="display:flex;gap:8px"><input class="in" type="date" id="cbd" value="${c.bd||''}" style="flex:1;min-width:0"><button class="btn" style="padding:8px 12px;white-space:nowrap" onclick="$('#cbd').value=''">Bỏ ngày sinh</button></div><label>Địa chỉ</label><input class="in" id="cadr" value="${esc(c.addr||'')}"><label>Ghi chú</label><input class="in" id="cnote" value="${esc(c.note||'')}"><label>Ghi chú 2</label><input class="in" id="cnote2" value="${esc(c.note2||'')}"><div class="acts">${id?`<button class="btn d" onclick="delC('${id}')">Xóa</button>`:`<button class="btn" onclick="${fc===2?'ordAdd(OP)':fc?'pickC()':'closeM()'}">Hủy</button>`}<button class="btn p" onclick="saveC('${id||''}',${fc||0})">Lưu</button></div>`);
 }
 function saveC(id,fc){
  const name=fixName($('#cn').value),addr=$('#cadr').value.trim(),note=$('#cnote').value.trim(),note2=$('#cnote2').value.trim(),bd=$('#cbd').value;
  const nums=[$('#cph').value,...[...document.querySelectorAll('.exin')].map(i=>i.value)].map(v=>String(v).replace(/[\s.\-()]/g,'')).filter(Boolean);
- if(!name||!nums.length){toast('Nhập tên và số điện thoại');return}
+ if(!name||/^kh\s*-?$/i.test(name)||!nums.length){toast('Nhập tên và số điện thoại');return}
  if(nums.some(n=>!/^\d{10}$/.test(n))){toast('Số điện thoại phải đủ 10 số');return}
  if(new Set(nums).size!==nums.length){toast('Có số điện thoại bị nhập trùng');return}
  if(S.customers.some(c=>c.id!==id&&nums.some(n=>allPh(c).includes(n)))){toast('Một số điện thoại này đã có ở khách khác');return}
  const phone=nums[0],ex=nums.slice(1);
- if(id)Object.assign(cus(id),{name,phone,ex,addr,note,note2,bd});else{const c={id:uid(),name,phone,ex,addr,note,note2,bd};S.customers.push(c);if(fc)cust=c.id}
+ if(id)Object.assign(cus(id),{name,phone,ex,addr,note,note2,bd});else{const c={id:uid(),name,phone,ex,addr,note,note2,bd};S.customers.push(c);if(fc===2)ordNew=c.id;else if(fc)cust=c.id}
  save();
+ if(fc===2){ordAdd(OP);ordPick(ordNew);return}
  if(fc){openCart();return}
  closeM();render();
 }
@@ -1246,7 +1276,7 @@ function ordSearch(){
  $('#osl').innerHTML=(q?`<div class="mu" style="font-size:13px">Tìm được ${l.length} khách</div>`:'')+l.slice(0,40).map(c=>`<button class="row" onclick="ordPick('${c.id}')"><div><b>${esc(c.name)}</b><br><small class="mu">${phs(c)}</small></div></button>`).join('')+(l.length>40?'<div class="mu" style="font-size:13px">Còn '+(l.length-40)+' khách nữa, gõ thêm để lọc</div>':'');
 }
 function ordPick(id){bumpC(id);ordC=id;const c=cus(id);$('#osel').innerHTML='<b>Đã chọn: '+esc(c.name)+' · '+esc(c.phone)+'</b>'}
-function saveP(id,again){
+function _saveP(id,again){
  const name=$('#pn').value.trim(),price=Math.round((+$('#pp').value)*1000),st=$('#ps').value,od=$('#pod').checked;
  if(!name||!(price>=0)||$('#pp').value===''){toast('Nhập tên và giá bán');return}
  const stock=st===''?null:+st;
@@ -1258,7 +1288,7 @@ function plist(){
  if(!S.products.length)return '<div class="empty">Bấm Thêm để tạo sản phẩm đầu tiên.</div>';
  const l=hs(pl().filter(p=>nz(p.name).includes(nz(pq))),pq);
  if(!l.length)return '<div class="empty">Không có sản phẩm nào trong mục này.</div>';
- return l.map(p=>`<div class="row" onclick="editP('${p.id}')">${p.od?`<input type="checkbox" class="ckb" onclick="event.stopPropagation()" onchange="odDone('${p.id}')" aria-label="Đã có hàng">`:''}${p.img?`<img class="th" src="${p.img}" alt="">`:''}<div style="flex:1"><b>${esc(p.name)}</b><br><small class="mu">${p.od?'Hàng order · tích ô bên trái khi hàng về':p.stock==null?'Không theo dõi kho':'Tồn kho: '+p.stock}${!p.od&&ordN(p.id)?' · '+ordN(p.id)+' khách đặt chờ nhận':''}</small>${p.od?`<br><button class="btn" style="padding:6px 10px;margin-top:6px" onclick="event.stopPropagation();ordMgr('${p.id}')">Khách đặt (${ordN(p.id)})</button>`:''}</div><b>${money(p.price)}</b><button class="btn d" style="padding:8px 10px" onclick="event.stopPropagation();delP('${p.id}')">Xóa</button></div>`).join('');
+ return l.map(p=>`<div class="row" onclick="editP('${p.id}')">${p.od?`<input type="checkbox" class="ckb" onclick="event.stopPropagation()" onchange="odDone('${p.id}')" aria-label="Đã có hàng">`:''}${p.img?`<img class="th" src="${p.img}" alt="">`:''}<div style="flex:1"><b>${esc(p.name)}</b><br><small class="mu">${p.od?'Hàng order · chọn ô bên trái khi hàng về':p.stock==null?'Không theo dõi kho':'Tồn kho: '+p.stock}${!p.od&&ordN(p.id)?' · '+ordN(p.id)+' khách đặt chờ nhận':''}${p.cost?' · vốn '+money(p.cost):''}</small>${p.od?`<br><button class="btn" style="padding:6px 10px;margin-top:6px" onclick="event.stopPropagation();ordMgr('${p.id}')">Khách đặt (${ordN(p.id)})</button>`:''}</div><b>${money(p.price)}</b><button class="btn d" style="padding:8px 10px" onclick="event.stopPropagation();delP('${p.id}')">Xóa</button></div>`).join('');
 }
 function ordDepSum(items){
  const ids=Array.isArray(ordFrom)?ordFrom:(ordFrom?[ordFrom]:[]);
@@ -1273,16 +1303,16 @@ function ordOf(cid){
  const l=OR().filter(o=>o.cid===cid&&oAct(o)).sort((a,b)=>b.t-a.t),cx=OR().filter(o=>o.cid===cid&&o.st==='cancel').sort((a,b)=>(b.ct||0)-(a.ct||0)).slice(0,5);
  if(!l.length&&!cx.length)return '';
  const ar=l.filter(o=>{const p=prod(o.pid);return p&&!p.od});
- return (l.length?`<div class="mu" style="margin-top:10px"><b>Đang đặt order</b></div>`+l.map(o=>{const p=prod(o.pid),ok=p&&!p.od;return `<div class="row"${ok?` onclick="ordTog('${o.id}')"`:''}>${ok?`<input type="checkbox" class="ckb" id="oc_${o.id}" ${ordSel.has(o.id)?'checked':''} style="pointer-events:none" tabindex="-1">`:''}<div style="flex:1"><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · Cọc ${money(o.dep)}${o.tt?' · đã báo hàng về '+fd(o.tt):''}${ok?' · hàng đã về':' · chưa về'}</small></div></div>`}).join('')+(ar.length?`<div class="acts"><button class="btn" style="flex:1" onclick="ordTogAll('${cid}')">Tích tất cả hàng đã về</button><button class="btn p" id="osb" style="flex:1" onclick="ordSellSel('${cid}')">Bán các món đã tích (${ordSel.size})</button></div>`:''):'')+(cx.length?`<div class="mu" style="margin-top:10px"><b>Đã hủy</b></div>`+cx.map(o=>{const p=prod(o.pid);return `<div class="row"><div><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · đã hủy ${fd(o.ct||o.t)}</small></div></div>`}).join(''):'');
+ return (l.length?`<div class="mu" style="margin-top:10px"><b>Đang đặt order</b></div>`+l.map(o=>{const p=prod(o.pid),ok=p&&!p.od;return `<div class="row"${ok?` onclick="ordTog('${o.id}')"`:''}>${ok?`<input type="checkbox" class="ckb" id="oc_${o.id}" ${ordSel.has(o.id)?'checked':''} style="pointer-events:none" tabindex="-1">`:''}<div style="flex:1"><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · Cọc ${money(o.dep)}${o.tt?' · đã báo hàng về '+fd(o.tt):''}${ok?' · hàng đã về':' · chưa về'}</small></div></div>`}).join('')+(ar.length?`<div class="acts"><button class="btn" style="flex:1" onclick="ordTogAll('${cid}')">Chọn tất cả hàng đã về</button><button class="btn p" id="osb" style="flex:1" onclick="ordSellSel('${cid}')">Bán các món đã chọn (${ordSel.size})</button></div>`:''):'')+(cx.length?`<div class="mu" style="margin-top:10px"><b>Đã hủy</b></div>`+cx.map(o=>{const p=prod(o.pid);return `<div class="row"><div><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · đã hủy ${fd(o.ct||o.t)}</small></div></div>`}).join(''):'');
 }
-function ordTog(id){if(ordSel.has(id))ordSel.delete(id);else ordSel.add(id);const e=$('#oc_'+id);if(e)e.checked=ordSel.has(id);const b=$('#osb');if(b)b.textContent='Bán các món đã tích ('+ordSel.size+')'}
+function ordTog(id){if(ordSel.has(id))ordSel.delete(id);else ordSel.add(id);const e=$('#oc_'+id);if(e)e.checked=ordSel.has(id);const b=$('#osb');if(b)b.textContent='Bán các món đã chọn ('+ordSel.size+')'}
 function ordTogAll(cid){
  OR().filter(o=>o.cid===cid&&oAct(o)).forEach(o=>{const p=prod(o.pid);if(p&&!p.od){ordSel.add(o.id);const e=$('#oc_'+o.id);if(e)e.checked=true}});
- const b=$('#osb');if(b)b.textContent='Bán các món đã tích ('+ordSel.size+')';
+ const b=$('#osb');if(b)b.textContent='Bán các món đã chọn ('+ordSel.size+')';
 }
 function ordSellSel(cid){
  const ids=[...ordSel].filter(i=>{const o=OR().find(x=>x.id===i);return o&&o.cid===cid&&oAct(o)});
- if(!ids.length){toast('Hãy tích những món cần bán');return}
+ if(!ids.length){toast('Hãy chọn những món cần bán');return}
  ordSellIds(ids,cid);
 }
 function ordSellIds(ids,cid){
@@ -1315,7 +1345,7 @@ function odDone(id){
  const p=prod(id);if(!p)return;
  p.od=false;if(p.stock!=null&&p.stock<=0)p.stock=1;save();render();
  const w=OR().filter(o=>o.pid===id&&oAct(o));
- if(!w.length){toast('Đã chuyển sang Còn hàng');return}
+ if(!w.length){toast('Đã chuyển sang Hàng về');return}
  modal(`<h2>Hàng đã về: ${esc(p.name)}</h2><div class="mu">${w.length} khách đã đặt, tổng cọc ${money(w.reduce((a,o)=>a+o.dep,0))}. Báo cho khách ngay?</div>`+w.map(o=>{const c=cus(o.cid);return `<div class="row"><div><b>${c?esc(c.name):'?'} × ${o.qty}</b><br><small class="mu">${c?esc(c.phone):''}${o.dep?' · cọc '+money(o.dep):''} · đặt ${fd(o.t)}</small></div></div>`}).join('')+`<div class="acts"><button class="btn" onclick="closeM()">Để sau</button><button class="btn p" onclick="ordNotify('${id}')">Nhắn tin báo khách</button></div>`);
 }
 function ordNotify(pid){
@@ -1341,19 +1371,19 @@ function fmT(v){return String(Math.round(v/1e4)/100).replace('.',',')+'tr'}
 function qtyV(p){return p.od?(p.stock==null||p.stock<1?1:p.stock):(p.stock==null?1:Math.max(0,p.stock))}
 function invVal(f){return S.products.filter(p=>f==='od'?p.od:(!p.od&&avail(p)>0)).reduce((a,p)=>a+p.price*qtyV(p),0)}
 function valLine(){return `<div class="mu" style="font-size:14px;margin:6px 0">Còn hàng: <b style="color:var(--ink)">${fmT(invVal('in'))}</b> · Hàng order: <b style="color:var(--ink)">${fmT(invVal('od'))}</b></div>`}
-function odBar(){const n=S.products.filter(p=>p.od).length;if(cf!=='od'||!n)return '';return `<div class="odbar"><button class="btn" onclick="odAll()">Tích tất cả</button><button class="btn p" id="odb" onclick="odGo()">Đã về (${odSel.size})</button></div>`}
+function odBar(){const n=S.products.filter(p=>p.od).length;if(cf!=='od'||!n)return '';return `<div class="odbar"><button class="btn" onclick="odAll()">Chọn tất cả</button><button class="btn p" id="odb" onclick="odGo()">Đã về (${odSel.size})</button></div>`}
 function odTog(id){if(odSel.has(id))odSel.delete(id);else odSel.add(id);const b=$('#odb');if(b)b.textContent='Đã về ('+odSel.size+')'}
 function odAll(){pl('od').filter(p=>nz(p.name).includes(nz(pq))).forEach(p=>odSel.add(p.id));$('#pls').innerHTML=plist();const b=$('#odb');if(b)b.textContent='Đã về ('+odSel.size+')'}
 function odGo(){
  const ids=[...odSel].filter(id=>{const p=prod(id);return p&&p.od});
- if(!ids.length){toast('Hãy tích những món đã về');return}
+ if(!ids.length){toast('Hãy chọn những món đã về');return}
  const now=Date.now();
  ids.forEach(id=>{const p=prod(id);p.od=false;p.av=now;if(p.stock!=null&&p.stock<=0)p.stock=1});
  odSel.clear();odLast=ids;save();render();
  const w=OR().filter(o=>ids.includes(o.pid)&&oAct(o));
- if(!w.length){toast('Đã chuyển '+ids.length+' món sang Còn hàng');return}
+ if(!w.length){toast('Đã chuyển '+ids.length+' món sang Hàng về');return}
  const cids=[...new Set(w.map(o=>o.cid))];
- modal(`<h2>Đã chuyển ${ids.length} món sang Còn hàng</h2><div class="mu">${cids.length} khách đang chờ những món này (hàng về ${fd(now)}). Báo cho khách ngay?</div>`+cids.map(cid=>{const c=cus(cid),os=w.filter(o=>o.cid===cid);return `<div class="row"><div><b>${c?esc(c.name):'?'}</b><br><small class="mu">${c?phs(c)+' · ':''}${os.map(o=>{const p=prod(o.pid);return esc(p?p.name:'?')+' × '+o.qty}).join(', ')}</small></div></div>`}).join('')+`<div class="acts"><button class="btn" onclick="closeM()">Để sau</button><button class="btn p" onclick="odNotifyMany()">Nhắn tin báo khách</button></div>`);
+ modal(`<h2>Đã chuyển ${ids.length} món sang Hàng về</h2><div class="mu">${cids.length} khách đang chờ những món này (hàng về ${fd(now)}). Báo cho khách ngay?</div>`+cids.map(cid=>{const c=cus(cid),os=w.filter(o=>o.cid===cid);return `<div class="row"><div><b>${c?esc(c.name):'?'}</b><br><small class="mu">${c?phs(c)+' · ':''}${os.map(o=>{const p=prod(o.pid);return esc(p?p.name:'?')+' × '+o.qty}).join(', ')}</small></div></div>`}).join('')+`<div class="acts"><button class="btn" onclick="closeM()">Để sau</button><button class="btn p" onclick="odNotifyMany()">Nhắn tin báo khách</button></div>`);
 }
 function odNotifyMany(){
  const ids=odLast,w=OR().filter(o=>ids.includes(o.pid)&&oAct(o)),map={};
@@ -1369,7 +1399,7 @@ function plist(){
  if(!S.products.length)return '<div class="empty">Bấm Thêm để tạo sản phẩm đầu tiên.</div>';
  const l=hs(pl().filter(p=>nz(p.name).includes(nz(pq))),pq);
  if(!l.length)return '<div class="empty">Không có sản phẩm nào trong mục này.</div>';
- return l.map(p=>`<div class="row" onclick="editP('${p.id}')">${p.od?`<input type="checkbox" class="ckb" ${odSel.has(p.id)?'checked':''} onclick="event.stopPropagation()" onchange="odTog('${p.id}')" aria-label="Chọn">`:''}${p.img?`<img class="th" src="${p.img}" alt="">`:''}<div style="flex:1"><b>${esc(p.name)}</b><br><small class="mu">${p.od?'Hàng order · tích ô bên trái, rồi bấm Đã về ở dưới':(p.stock==null?'Không theo dõi kho':'Tồn kho: '+p.stock)+(p.av?' · hàng về '+fd(p.av):'')}${!p.od&&ordN(p.id)?' · '+ordN(p.id)+' khách đặt chờ nhận':''}</small>${p.od?`<br><button class="btn" style="padding:6px 10px;margin-top:6px" onclick="event.stopPropagation();ordMgr('${p.id}')">Khách đặt (${ordN(p.id)})</button>`:''}</div><b>${money(p.price)}</b><button class="btn d" style="padding:8px 10px" onclick="event.stopPropagation();delP('${p.id}')">Xóa</button></div>`).join('');
+ return l.map(p=>`<div class="row" onclick="editP('${p.id}')">${p.od?`<input type="checkbox" class="ckb" ${odSel.has(p.id)?'checked':''} onclick="event.stopPropagation()" onchange="odTog('${p.id}')" aria-label="Chọn">`:''}${p.img?`<img class="th" src="${p.img}" alt="">`:''}<div style="flex:1"><b>${esc(p.name)}</b><br><small class="mu">${p.od?'Hàng order · chọn ô bên trái, rồi bấm Đã về ở dưới':(p.stock==null?'Không theo dõi kho':'Tồn kho: <b style="color:'+(p.stock<=0?'var(--dg)':p.stock<=3?'var(--or)':'var(--ok)')+'">'+p.stock+'</b>')+(p.av?' · hàng về '+fd(p.av):'')}${!p.od&&ordN(p.id)?' · '+ordN(p.id)+' khách đặt chờ nhận':''}${p.cost?' · vốn '+money(p.cost):''}</small>${p.od?`<br><button class="btn" style="padding:6px 10px;margin-top:6px" onclick="event.stopPropagation();ordMgr('${p.id}')">Khách đặt (${ordN(p.id)})</button>`:''}</div><b>${money(p.price)}</b><button class="btn d" style="padding:8px 10px" onclick="event.stopPropagation();delP('${p.id}')">Xóa</button></div>`).join('');
 }
 function prodV(){return `<div class="bar"><b>${S.products.length} sản phẩm</b><button class="btn p" onclick="editP()">Thêm</button></div><input class="in" placeholder="Tìm sản phẩm theo tên" value="${esc(pq)}" oninput="pq=this.value;$('#pls').innerHTML=plist()">${chips(1)}${valLine()}<div id="pls">${plist()}</div>${odBar()}`}
 function cusEx(x){
@@ -1382,7 +1412,7 @@ function ordOf(cid){
  const l=OR().filter(o=>o.cid===cid&&oAct(o)).sort((a,b)=>b.t-a.t),cx=OR().filter(o=>o.cid===cid&&o.st==='cancel').sort((a,b)=>(b.ct||0)-(a.ct||0)).slice(0,5);
  if(!l.length&&!cx.length)return '';
  const ar=l.filter(o=>{const p=prod(o.pid);return p&&!p.od});
- return (l.length?`<div class="mu" style="margin-top:10px"><b>Đang đặt order · ${l.length} đơn đặt (${ar.length} đã về)</b></div>`+l.map(o=>{const p=prod(o.pid),ok=p&&!p.od;return `<div class="row"${ok?` onclick="ordTog('${o.id}')"`:''}>${ok?`<input type="checkbox" class="ckb" id="oc_${o.id}" ${ordSel.has(o.id)?'checked':''} style="pointer-events:none" tabindex="-1">`:''}<div style="flex:1"><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · Cọc ${money(o.dep)}${o.tt?' · đã báo hàng về '+fd(o.tt):''}${ok?' · hàng đã về'+(p.av?' '+fd(p.av):''):' · chưa về'}</small></div></div>`}).join('')+(ar.length?`<div class="acts"><button class="btn" style="flex:1" onclick="ordTogAll('${cid}')">Tích tất cả hàng đã về</button><button class="btn p" id="osb" style="flex:1" onclick="ordSellSel('${cid}')">Bán các món đã tích (${ordSel.size})</button></div>`:''):'')+(cx.length?`<div class="mu" style="margin-top:10px"><b>Đã hủy</b></div>`+cx.map(o=>{const p=prod(o.pid);return `<div class="row"><div><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · đã hủy ${fd(o.ct||o.t)}</small></div></div>`}).join(''):'');
+ return (l.length?`<div class="mu" style="margin-top:10px"><b>Đang đặt order · ${l.length} đơn đặt (${ar.length} đã về)</b></div>`+l.map(o=>{const p=prod(o.pid),ok=p&&!p.od;return `<div class="row"${ok?` onclick="ordTog('${o.id}')"`:''}>${ok?`<input type="checkbox" class="ckb" id="oc_${o.id}" ${ordSel.has(o.id)?'checked':''} style="pointer-events:none" tabindex="-1">`:''}<div style="flex:1"><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · Cọc ${money(o.dep)}${o.tt?' · đã báo hàng về '+fd(o.tt):''}${ok?' · hàng đã về'+(p.av?' '+fd(p.av):''):' · chưa về'}</small></div></div>`}).join('')+(ar.length?`<div class="acts"><button class="btn" style="flex:1" onclick="ordTogAll('${cid}')">Chọn tất cả hàng đã về</button><button class="btn p" id="osb" style="flex:1" onclick="ordSellSel('${cid}')">Bán các món đã chọn (${ordSel.size})</button></div>`:''):'')+(cx.length?`<div class="mu" style="margin-top:10px"><b>Đã hủy</b></div>`+cx.map(o=>{const p=prod(o.pid);return `<div class="row"><div><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · đã hủy ${fd(o.ct||o.t)}</small></div></div>`}).join(''):'');
 }
 function ordMgr(pid){
  const p=prod(pid),l=OR().filter(o=>o.pid===pid).sort((a,b)=>b.t-a.t),w=l.filter(oAct);
@@ -1434,21 +1464,65 @@ function ordOf(cid){
  const l=OR().filter(o=>o.cid===cid&&oAct(o)).sort((a,b)=>b.t-a.t),cx=OR().filter(o=>o.cid===cid&&o.st==='cancel').sort((a,b)=>(b.ct||0)-(a.ct||0)).slice(0,5);
  if(!l.length&&!cx.length)return '';
  const ar=l.filter(ordArr);
- return (l.length?`<div class="mu" style="margin-top:10px"><b>Đang đặt order · ${l.length} đơn đặt <span class="gr">(${ar.length} đã về)</span></b></div>`+l.map(o=>{const p=prod(o.pid),ok=ordArr(o);return `<div class="row"${ok?` onclick="ordTog('${o.id}')"`:''}>${ok?`<input type="checkbox" class="ckb" id="oc_${o.id}" ${ordSel.has(o.id)?'checked':''} style="pointer-events:none" tabindex="-1">`:''}<div style="flex:1"><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · Cọc ${money(o.dep)}${o.tt?' · đã báo hàng về '+fd(o.tt):''}${ok?' · <span class="gr">hàng đã về'+(p.av?' '+fd(p.av):'')+'</span>':' · chưa về'}</small></div></div>`}).join('')+(ar.length?`<div class="acts"><button class="btn" id="ost" style="flex:1" onclick="ordTogAll('${cid}')">Chọn</button><button class="btn p" id="osb" style="flex:1" onclick="ordSellSel('${cid}')">Bán các món đã chọn (${ordSel.size})</button></div>`:''):'')+(cx.length?`<div class="mu" style="margin-top:10px"><b>Đã hủy</b></div>`+cx.map(o=>{const p=prod(o.pid);return `<div class="row"><div><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · đã hủy ${fd(o.ct||o.t)}</small></div></div>`}).join(''):'');
+ return (l.length?`<div class="mu" style="margin-top:10px"><b>Đang đặt order · ${l.length} đơn đặt <span class="gr">(${ar.length} đã về)</span></b></div>`+l.map(o=>{const p=prod(o.pid),ok=ordArr(o);return `<div class="row"${ok?` onclick="ordTog('${o.id}')"`:''}>${ok?`<input type="checkbox" class="ckb" id="oc_${o.id}" ${ordSel.has(o.id)?'checked':''} style="pointer-events:none" tabindex="-1">`:''}<div style="flex:1"><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · Cọc ${money(o.dep)}${o.tt?' · đã báo hàng về '+fd(o.tt):''}${ok?' · <span class="gr">hàng đã về'+(p.av?' '+fd(p.av):'')+'</span>':' · chưa về'}</small></div></div>`}).join('')+(ar.length?`<div class="acts" style="justify-content:flex-end;margin:10px 0 4px"><button class="btn" id="ost" style="padding:8px 14px;font-size:14px" onclick="ordTogAll('${cid}')">Chọn</button><button class="btn p" id="osb" style="padding:8px 14px;font-size:14px;white-space:nowrap" onclick="ordSellSel('${cid}')">Bán các món đã chọn (${ordSel.size})</button></div>`:''):'')+(cx.length?`<div class="mu" style="margin-top:10px"><b>Đã hủy</b></div>`+cx.map(o=>{const p=prod(o.pid);return `<div class="row"><div><b>${esc(p?p.name:'(đã xóa)')} × ${o.qty}</b><br><small class="mu">Đặt ${fd(o.t)} · đã hủy ${fd(o.ct||o.t)}</small></div></div>`}).join(''):'');
 }
 function rangeUI(){return `<div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1"><label style="margin:0 0 4px">Từ ngày</label><input class="in" type="date" value="${rf}" onchange="rf=this.value;render()"></div><div style="flex:1"><label style="margin:0 0 4px">Đến ngày</label><input class="in" type="date" value="${rt}" onchange="rt=this.value;render()"></div></div>`}
-function rcus(r){const s=S.sales.find(x=>x.id===r.sid);return s&&s.cn?' · '+esc(s.cn)+(s.cp?' · '+esc(s.cp):''):''}
+function dtc(t){return `<span style="color:var(--ac);font-weight:600">${dt(t)}</span>`}
+function cnc(s){return s.cn?' · <span style="color:var(--pu);font-weight:600">'+esc(s.cn)+'</span>'+(s.cp?' · '+esc(s.cp):''):''}
+function rcus(r){const s=S.sales.find(x=>x.id===r.sid);return s?cnc(s):''}
 function repList(k){
  const l=S.sales.filter(s=>s.t>=RF&&s.t<RT).sort((a,b)=>b.t-a.t),rl=(S.rets||[]).filter(r=>r.t>=RF&&r.t<RT).sort((a,b)=>b.t-a.t);
  let h='';
- if(k==='inv')h='<h2>Hóa đơn ('+l.length+')</h2>'+(l.length?l.map(s=>`<button class="row" onclick="showRc('${s.id}')"><div><b>Hóa đơn #${s.n}</b><span class="mu"> (${nI(s)} món)</span><br><small class="mu">${dt(s.t)}${s.cn?' · '+esc(s.cn)+(s.cp?' · '+esc(s.cp):''):''}${hasRet(s.id)?' · có hoàn hàng':''}</small></div><b>${money(s.total)}</b></button>`).join(''):'<div class="empty">Không có hóa đơn.</div>');
- else if(k==='ret')h='<h2>Hoàn hàng ('+rl.length+')</h2>'+(rl.length?rl.map(r=>`<button class="row" onclick="showRc('${r.sid}')"><div><b>Hoàn hóa đơn #${r.n}</b><br><small class="mu">${dt(r.t)}${rcus(r)} · ${r.items.map(i=>esc(i.name)+' ×'+i.qty).join(', ')}</small></div><b style="color:var(--dg)">−${money(r.amt)}</b></button>`).join(''):'<div class="empty">Không có lần hoàn hàng.</div>');
+ if(k==='inv')h='<h2>Hóa đơn ('+l.length+')</h2>'+(l.length?l.map(s=>`<button class="row" onclick="showRc('${s.id}')"><div><b>Hóa đơn #${s.n}</b><span class="mu"> (${nI(s)} món)</span><br><small class="mu">${dtc(s.t)}${cnc(s)}${hasRet(s.id)?' · có hoàn hàng':''}</small></div><b>${money(s.total)}</b></button>`).join(''):'<div class="empty">Không có hóa đơn.</div>');
+ else if(k==='ret')h='<h2>Hoàn hàng ('+rl.length+')</h2>'+(rl.length?rl.map(r=>`<button class="row" onclick="showRc('${r.sid}')"><div><b>Hoàn hóa đơn #${r.n}</b><br><small class="mu">${dtc(r.t)}${rcus(r)} · ${r.items.map(i=>esc(i.name)+' ×'+i.qty).join(', ')}</small></div><b style="color:var(--dg)">−${money(r.amt)}</b></button>`).join(''):'<div class="empty">Không có lần hoàn hàng.</div>');
  else{
   const rows=[];l.forEach(s=>s.items.forEach(i=>rows.push({s,i})));
-  h='<h2>Món đã bán ('+rows.length+')</h2>'+(rows.length?rows.map(x=>`<button class="row" onclick="showRc('${x.s.id}')"><div><b>${esc(x.i.name)} × ${x.i.qty}</b><br><small class="mu">Hóa đơn #${x.s.n} · ${dt(x.s.t)}${x.s.cn?' · '+esc(x.s.cn)+(x.s.cp?' · '+esc(x.s.cp):''):''}</small></div><b>${money(x.i.price*x.i.qty)}</b></button>`).join(''):'<div class="empty">Không có món nào.</div>');
+  h='<h2>Món đã bán ('+rows.length+')</h2>'+(rows.length?rows.map(x=>`<button class="row" onclick="showRc('${x.s.id}')"><div><b>${esc(x.i.name)} × ${x.i.qty}</b><br><small class="mu">Hóa đơn #${x.s.n} · ${dtc(x.s.t)}${cnc(x.s)}</small></div><b>${money(x.i.price*x.i.qty)}</b></button>`).join(''):'<div class="empty">Không có món nào.</div>');
  }
  modal(h+'<div class="acts"><button class="btn" style="flex:1" onclick="closeM()">Đóng</button></div>');
 }
+
+/* ===== Mục sản phẩm tùy chỉnh (Hàng ôm / Hàng về / Hàng order / Hết hàng + tag mới) ===== */
+const PTD=[{k:'om',n:'Hàng ôm'},{k:'in',n:'Hàng về'},{k:'od',n:'Hàng order'},{k:'out',n:'Hết hàng'}],PTB=['in','od','out'];
+function PT(){if(!Array.isArray(S.pt)||!S.pt.length)S.pt=PTD.map(x=>({...x}));return S.pt}
+function tagOf(p){if(p.tg&&PT().some(t=>t.k===p.tg))return p.tg;if(p.od)return 'od';return avail(p)>0?'in':'out'}
+function curTag(wo){return PT().some(t=>t.k===cf)&&(wo||cf!=='od')?cf:'in'}
+function pl(f){f=f||cf;return [...S.products].sort((a,b)=>b.id.localeCompare(a.id)).filter(p=>tagOf(p)===f)}
+function chips(wo){
+ const f=curTag(wo);
+ return `<div class="chips">${PT().filter(t=>wo||t.k!=='od').map(t=>`<button class="chip ${f===t.k?'on':''}" style="--tc:${tc(t.k)}" onclick="setCat('${t.k}')">${esc(t.n)} (${S.products.filter(p=>tagOf(p)===t.k).length})</button>`).join('')}<button class="chip" onclick="ptMgr()">＋ Sửa mục</button></div>`}
+function invVal(k){return S.products.filter(p=>tagOf(p)===k).reduce((a,p)=>a+p.price*qtyV(p),0)}
+function valLine(){return `<div class="mu" style="font-size:14px;margin:6px 0">${invOrd().map(t=>`${esc(t.n)}: <b style="color:${tc(t.k)}">${fmV(invVal(t.k))}</b>`).join(' · ')}</div>`}
+function tc(k){return {in:'var(--ok)',od:'var(--or)',om:'var(--pu)',out:'var(--dg)'}[k]||'var(--tl)'}
+function invOrd(){const w={in:0,od:1,om:2};return PT().filter(t=>t.k!=='out').map((t,i)=>[t,w[t.k]??3+i]).sort((a,b)=>a[1]-b[1]).map(x=>x[0])}
+function fmV(v){return String(Math.round(v/1e4)/100)+'tr'}
+function invRep(){
+ const l=invOrd(),all=l.reduce((a,t)=>a+invVal(t.k),0);
+ return `<h2 style="font-size:16px;margin:18px 0 6px">Giá trị tồn kho (theo giá bán)</h2><div class="stat" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${l.map(t=>`<div style="padding:10px;border-left:4px solid ${tc(t.k)}"><small>Giá trị ${esc(t.n.toLowerCase())}</small><b style="font-size:16px;color:${tc(t.k)}">${fmV(invVal(t.k))}</b><small style="margin:4px 0 0">${S.products.filter(p=>tagOf(p)===t.k).length} sản phẩm</small></div>`).join('')}<div class="w"><small>Tổng giá trị tồn kho</small><b style="font-size:24px;color:var(--ac)">${money(all)}</b></div></div>`}
+function ptSel(id,p){
+ const cu=PT().filter(t=>!PTB.includes(t.k)),cur=id?p.tg:(cu.some(t=>t.k===cf)?cf:'');
+ return `<label>Mục sản phẩm</label><select class="in" id="ptg"><option value="">Tự động (theo hàng order / tồn kho)</option>${cu.map(t=>`<option value="${t.k}" ${cur===t.k?'selected':''}>${esc(t.n)}</option>`).join('')}</select>`}
+function saveP(id,again){
+ const tg=$('#ptg')?$('#ptg').value:'',cs=$('#pcost')?$('#pcost').value:'',n0=S.products.length;
+ _saveP(id,again);
+ const p=id?prod(id):(S.products.length>n0?S.products[0]:null);
+ if(p){if(tg)p.tg=tg;else delete p.tg;if(cs!=='')p.cost=Math.round(+cs*1000);else delete p.cost;save();render()}
+}
+function ptMgr(){
+ modal(`<h2>Sửa các mục sản phẩm</h2><div class="mu" style="font-size:13px">Đổi tên, thêm mục mới hoặc xóa mục. Hàng về, Hàng order, Hết hàng là mục có sẵn (chỉ đổi tên được).</div>${PT().map(t=>`<div class="row" style="cursor:default"><input class="in" style="margin:0" value="${esc(t.n)}" onchange="ptRen('${t.k}',this.value)">${PTB.includes(t.k)?'':`<button class="btn d" style="padding:8px 10px" onclick="ptDel('${t.k}')">Xóa</button>`}</div>`).join('')}<label>Thêm mục mới</label><div class="acts" style="margin-top:6px"><input class="in" id="tn" style="margin:0" placeholder="Tên mục, ví dụ: Hàng đặt cọc"><button class="btn p" onclick="ptAdd()">Thêm</button></div><div class="acts"><button class="btn p" style="flex:1" onclick="closeM()">Xong</button></div>`)}
+function ptRen(k,v){v=v.trim();if(!v)return;PT().find(t=>t.k===k).n=v;save();render()}
+function ptAdd(){const v=$('#tn').value.trim();if(!v){toast('Nhập tên mục');return}PT().push({k:'t'+Date.now().toString(36),n:v});save();render();ptMgr();toast('Đã thêm mục')}
+function ptDel(k){const t=PT().find(x=>x.k===k);ask('Xóa mục "'+esc(t.n)+'"? Sản phẩm trong mục sẽ tự chuyển về Hàng về / Hết hàng.',()=>{S.pt=PT().filter(x=>x.k!==k);S.products.forEach(p=>{if(p.tg===k)delete p.tg});if(cf===k)cf='in';save();render();ptMgr()})}
+
+let OP='',ordNew='';
+function OVDf(){return S.ovd>0?S.ovd:7}
+function ovList(){const lim=Date.now()-OVDf()*864e5;return OR().filter(o=>oAct(o)&&o.t<lim).filter(o=>{const p=prod(o.pid);return p&&p.od}).sort((a,b)=>a.t-b.t)}
+function ovBanner(){const n=ovList().length;return n?`<div style="margin-bottom:10px;padding:12px 14px;border:1px solid var(--or);border-radius:12px;background:var(--sf);color:var(--or);cursor:pointer" onclick="ovM()">⚠️ <b>${n} đơn order quá ${OVDf()} ngày</b> mà hàng chưa về · Bấm để xem ›</div>`:''}
+function ovM(){
+ const l=ovList();
+ modal(`<h2>Đơn order quá ${OVDf()} ngày chưa có hàng</h2><div class="mu" style="font-size:13px">Bấm vào từng dòng để xem hoặc xử lý khách đặt.</div>`+(l.length?l.map(o=>{const p=prod(o.pid),c=cus(o.cid),d=Math.floor((Date.now()-o.t)/864e5);return `<div class="row" onclick="ordMgr('${p.id}')"><div style="flex:1"><b>${esc(p.name)} × ${o.qty}</b><br><small class="mu">${c?esc(c.name)+' · '+phs(c)+' · ':''}Đặt ${fd(o.t)} · Cọc ${money(o.dep)}</small></div><b style="color:var(--or)">${d} ngày</b></div>`}).join(''):'<div class="empty">Không còn đơn nào quá hạn.</div>')+`<div class="acts"><button class="btn p" style="flex:1" onclick="closeM()">Đóng</button></div>`)}
+setTimeout(()=>{const n=ovList().length;if(n)toast('⚠️ Có '+n+' đơn order quá '+OVDf()+' ngày chưa có hàng')},1200);
+function ordNewC(pid){OP=pid;editC('',2)}
 autoBak();bootRestore();
 document.addEventListener('visibilitychange',()=>{if(document.hidden)autoBak()});
 window.addEventListener('pagehide',()=>autoBak());
