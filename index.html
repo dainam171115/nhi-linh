@@ -1561,6 +1561,27 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.ser
    if(o){cust=o.cid;autoC=o.cid;try{bar()}catch(e){}}
   }
  };
+ const _pay=pay;
+ pay=function(){
+  if(cust){
+   const have=(Array.isArray(ordFrom)?ordFrom:(ordFrom?[ordFrom]:[])).filter(i=>{const o=OR().find(x=>x.id===i);return o&&o.cid===cust});
+   OR().forEach(o=>{if(o.cid===cust&&oAct(o)&&cart[o.pid]&&!have.includes(o.id))have.push(o.id)});
+   ordFrom=have;
+  }
+  return _pay.apply(this,arguments);
+ };
+ function ordStale(){return OR().filter(o=>oAct(o)&&o.cid&&S.sales.some(s=>s.cid===o.cid&&s.t>=o.t&&s.items.some(i=>i.id===o.pid)))}
+ window.ordCleanup=function(){
+  const l=ordStale();
+  if(!l.length){toast('Không có đơn nào cần dọn');return}
+  const n=new Set(l.map(o=>o.cid)).size;
+  ask('Đóng '+l.length+' đơn đặt mà khách đã mua đúng món đó sau ngày đặt ('+n+' khách)?',()=>{
+   l.forEach(o=>{const s=S.sales.filter(s=>s.cid===o.cid&&s.t>=o.t&&s.items.some(i=>i.id===o.pid)).sort((a,b)=>a.t-b.t)[0];o.st='done';o.dn=s?s.t:Date.now()});
+   save();render();toast('Đã dọn '+l.length+' đơn')
+  });
+ };
+ const _cc=cusChips;
+ cusChips=function(){return _cc()+(cfl==='ord'?'<button class="btn" style="width:100%;margin:8px 0" onclick="ordCleanup()">Dọn đơn đã bán ('+ordStale().length+')</button>':'')};
  const _cr=custRow;custRow=function(){const r=_cr();return cus(cust)?r.replace('<span>','<span style="'+B+'">'):r};
  const _cl=cList;cList=function(k){return _cl(k).replace(/<div><b>/g,'<div><b style="color:var(--pu)">')};
  const _cu=cusL;cusL=function(){return _cu().replace(/<div style="flex:1"><b>/g,'<div style="flex:1"><b style="color:var(--pu)">')};
