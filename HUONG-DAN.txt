@@ -1,39 +1,30 @@
-HƯỚNG DẪN ĐƯA APP BÁN HÀNG LÊN MẠNG (MIỄN PHÍ)
+HƯỚNG DẪN ĐƯA APP BÁN HÀNG LÊN MẠNG (MIỄN PHÍ) - bản v59
 
-Thư mục này gồm: index.html (app), manifest.webmanifest, sw.js (giúp chạy offline), các file icon.
-Hãy giữ nguyên cả thư mục, không đổi tên file.
+Thư mục gồm: index.html (app), sw.js (chạy offline), manifest.webmanifest, 4 file icon
+(icon-192.png, icon-512.png, icon-512-maskable.png, apple-touch-icon.png).
+Giữ nguyên cả thư mục, không đổi tên file.
 
-CÁCH 1 - Netlify (dễ nhất, không cần code)
-1. Vào app.netlify.com/drop (đăng ký tài khoản miễn phí).
-2. Giải nén file zip, kéo cả thư mục vào khung "Drag and drop".
-3. Netlify cho bạn một link dạng xxxx.netlify.app. Đổi tên link trong phần Site settings nếu muốn.
+1) ĐƯA LÊN MẠNG (chọn một cách)
+- Netlify (dễ nhất): vào app.netlify.com/drop, kéo cả thư mục đã giải nén vào khung. Nhận link xxxx.netlify.app.
+- Cloudflare Pages: Workers & Pages > Create > Pages > Upload assets > tải thư mục lên > Deploy.
+- GitHub Pages: tạo repository Public, Add file > Upload files (tải TẤT CẢ file), Settings > Pages >
+  Deploy from a branch > main > / (root) > Save. Link dạng https://TENBAN.github.io/ban-hang/
 
-CÁCH 2 - Cloudflare Pages
-1. Vào dash.cloudflare.com > Workers & Pages > Create > Pages > Upload assets.
-2. Đặt tên dự án, tải thư mục lên, bấm Deploy.
+2) CÀI LÊN IPHONE
+1. Mở link bằng Safari (bắt buộc), đợi tải xong một lần khi có mạng.
+2. Chia sẻ > Thêm vào Màn hình chính.
+3. Mở app từ biểu tượng trên màn hình; dùng được cả khi mất mạng.
+Hãy nhập sản phẩm SAU khi đã thêm vào Màn hình chính (app trên Màn hình chính có bộ nhớ riêng, tách khỏi Safari).
 
-CÀI LÊN IPHONE
-1. Mở link bằng Safari (bắt buộc dùng Safari).
-2. Đợi trang tải xong một lần khi có mạng.
-3. Bấm nút Chia sẻ > Thêm vào Màn hình chính.
-4. Từ đó mở app từ biểu tượng trên màn hình, dùng được cả khi mất mạng.
+3) CẬP NHẬT BẢN MỚI
+- Tải đè toàn bộ thư mục lên cùng dự án. Không cần tự sửa số phiên bản nữa.
+- Khi mở app có mạng, đầu trang sẽ hiện "Có bản mới của app", bấm Cập nhật là xong.
+- Dữ liệu không bị mất khi cập nhật.
 
-LƯU Ý
+4) GIỮ DỮ LIỆU AN TOÀN
+- Cài app từ LINK RIÊNG của bạn, KHÔNG cài từ link claude.ai. Không dùng chế độ Duyệt web riêng tư.
+- Cài đặt trong app: dòng "Nơi lưu dữ liệu" phải hiện địa chỉ riêng của bạn. Có khung đỏ cảnh báo nghĩa là mở sai bản.
 - Dữ liệu lưu trên từng thiết bị, không tự đồng bộ giữa các máy.
-- Hãy nhập sản phẩm SAU khi đã thêm vào Màn hình chính (app trên Màn hình chính có bộ nhớ riêng, tách khỏi Safari).
-- Bấm Sao lưu trong Cài đặt thường xuyên và lưu đoạn văn bản vào Ghi chú.
-- Khi cần cập nhật app, mình gửi bản mới; bạn tải đè thư mục lên cùng dự án. Đổi V='banhang-v1' trong sw.js thành v2, v3... để máy nhận bản mới.
-
-VÌ SAO DỮ LIỆU CÓ THỂ BỊ MẤT KHI THOÁT RA VÀO LẠI
-- Hãy cài app từ LINK RIÊNG của bạn (xxxx.netlify.app), KHÔNG cài từ link claude.ai. Link trong Claude chạy trong khung bảo mật, có thể không giữ dữ liệu khi thoát.
-- Trên iPhone, phải mở link bằng Safari rồi Chia sẻ > Thêm vào Màn hình chính. Không dùng chế độ Duyệt web riêng tư.
-- Vào Cài đặt trong app, dòng "Nơi lưu dữ liệu" phải hiện địa chỉ riêng của bạn và "đang chạy như app trên màn hình chính".
-- Nếu đầu trang có khung đỏ cảnh báo, nghĩa là bạn đang mở sai bản.
+- Ảnh sản phẩm được lưu riêng trong máy (v59). Các bản tự động lưu không kèm ảnh;
+  nút Sao lưu trong Cài đặt vẫn gồm cả ảnh. Hãy sao lưu thường xuyên và lưu vào Ghi chú.
 - Đừng xóa app rồi cài lại trước khi bấm Sao lưu ra ngoài máy.
-
-CÁCH 3 - GitHub Pages (miễn phí)
-1. Tạo repository mới trên github.com (ví dụ: ban-hang), chọn Public.
-2. Bấm Add file > Upload files, kéo TẤT CẢ file trong thư mục này lên (index.html, sw.js, manifest.webmanifest, 3 file icon), bấm Commit changes.
-3. Vào Settings > Pages > Source: chọn Deploy from a branch, Branch: main, thư mục / (root), bấm Save.
-4. Đợi 1-2 phút, link có dạng https://TENBAN.github.io/ban-hang/ . Mở link này bằng Safari rồi Chia sẻ > Thêm vào Màn hình chính.
-5. Khi sửa code: mở index.html trên GitHub, bấm biểu tượng bút chì để sửa, Commit. Nhớ đổi V='banhang-v56' trong sw.js thành v57, v58... để máy nhận bản mới.
