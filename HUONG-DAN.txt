@@ -36,4 +36,4 @@ CÁCH 3 - GitHub Pages (miễn phí)
 2. Bấm Add file > Upload files, kéo TẤT CẢ file trong thư mục này lên (index.html, sw.js, manifest.webmanifest, 3 file icon), bấm Commit changes.
 3. Vào Settings > Pages > Source: chọn Deploy from a branch, Branch: main, thư mục / (root), bấm Save.
 4. Đợi 1-2 phút, link có dạng https://TENBAN.github.io/ban-hang/ . Mở link này bằng Safari rồi Chia sẻ > Thêm vào Màn hình chính.
-5. Khi sửa code: mở index.html trên GitHub, bấm biểu tượng bút chì để sửa, Commit. Nhớ đổi V='banhang-v46' trong sw.js thành v32, v33... để máy nhận bản mới.
+5. Khi sửa code: mở index.html trên GitHub, bấm biểu tượng bút chì để sửa, Commit. Nhớ đổi V='banhang-v56' trong sw.js thành v57, v58... để máy nhận bản mới.
