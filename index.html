@@ -417,6 +417,7 @@ function lgRow(e){
   if(ev.lines.length)al=`Đã trừ vào: ${ev.lines.map(lgInv).join(' · ')}`;
   if(ev.left>0)al+=(al?'<br>':'')+`Dư ${money(ev.left)} → giữ làm số dư cho khách`;
   det=lgSplit(ev.lines)+nPay(p);cls='dn';
+  if(p.amt<0){title='<b class="lg-t">Trả tiền lại cho khách</b>';sub='Đã trả lại '+money(-p.amt)+(p.pm?' · '+esc(p.pm):'');al='Hoàn số dư cho khách';cls='z'}
  }else{
   const r=e.r,ev=i.ev['r'+(r.id||r.t)]||{lines:[],left:0};
   title=`<b class="lg-t">Khách trả lại hàng</b>`;
@@ -425,8 +426,8 @@ function lgRow(e){
   else al='Hoàn tiền mặt cho khách → nợ không đổi';
   det=lgSplit(ev.lines)+nRet(r);cls=e.d<0?'dn':'z';
  }
- const kk=e.d>0?`<span class="lg-k" style="color:var(--dg)">NỢ THÊM</span>`:e.d<0?`<span class="lg-k" style="color:var(--ok)">NỢ BỚT</span>`:`<span class="lg-k" style="color:var(--mu)">NỢ KHÔNG ĐỔI</span>`;
- const dx=e.d>0?`<b style="color:var(--dg)">+${money(e.d)}</b>`:e.d<0?`<b style="color:var(--ok)">−${money(-e.d)}</b>`:'';
+ const kk=(e.k==='p'&&e.p.amt<0)?`<span class="lg-k" style="color:var(--mu)">HOÀN SỐ DƯ</span>`:e.d>0?`<span class="lg-k" style="color:var(--dg)">NỢ THÊM</span>`:e.d<0?`<span class="lg-k" style="color:var(--ok)">NỢ BỚT</span>`:`<span class="lg-k" style="color:var(--mu)">NỢ KHÔNG ĐỔI</span>`;
+ const dx=(e.k==='p'&&e.p.amt<0)?`<b style="color:var(--mu)">${money(-e.p.amt)}</b>`:e.d>0?`<b style="color:var(--dg)">+${money(e.d)}</b>`:e.d<0?`<b style="color:var(--ok)">−${money(-e.d)}</b>`:'';
  const bx=e.b>0?`Nợ còn lại: <b style="display:inline;font-size:inherit;color:var(--dg)">${money(e.b)}</b>`:e.b<0?`Dư: <b style="display:inline;font-size:inherit;color:var(--ac)">+${money(-e.b)}</b>`:`<b style="display:inline;font-size:inherit;color:var(--ok)">Hết nợ ✓</b>`;
  return `<div class="lg ${cls}"><div class="lg-h" onclick="this.parentNode.classList.toggle('open')"><div class="lg-l">${title}<div class="lg-s">${dt(e.t)}</div><div class="lg-c">${sub}</div>${al?`<div class="lg-c">${al}</div>`:''}</div><div class="lg-r">${kk}${dx}<small>${bx}</small></div></div><div class="lg-d">${det}</div></div>`;
 }
@@ -446,7 +447,7 @@ function openInvH(id){
 function cusD(id){bumpC(id);ordSel.clear();
  const c=cus(id),t=cstat(id),d=cdebt(id);
  modal(`<h2>${esc(c.name)}</h2><div class="mu">${phs(c)}${c.addr?'<br>Địa chỉ: '+esc(c.addr):''}${c.note?'<br>'+esc(c.note):''}${c.note2?'<br>'+esc(c.note2):''}${c.bd?'<br>Sinh nhật: '+c.bd.split('-').reverse().join('/'):''}</div><div class="stat"><div><small>Tổng đã mua</small><b>${money(t.sum)}</b></div><div><small>Số lần mua</small><b>${t.n} <span class="mu" style="font-size:15px;font-weight:400">(${t.q} món)</span></b></div><div class="w"><small>${d<0?'Số dư (tiền khách còn ở cửa hàng)':'Công nợ'}</small><b style="color:${d>0?'var(--dg)':d<0?'var(--ac)':'var(--ink)'}">${d<0?'+':''}${money(Math.abs(d))}</b></div></div>`+
- ordOf(id)+openInvH(id)+`<div style="border-top:1px solid var(--ln);margin:18px 0 14px"></div><button class="btn p" style="width:100%" onclick="payD('${id}')">Khách trả tiền</button><div style="margin:22px 0 2px;font-size:16px"><b>Sổ giao dịch</b></div><div class="lg-guide">Mỗi dòng = 1 lần <b>mua hàng</b> hoặc <b>trả tiền</b>, mới nhất ở trên.<br><span style="color:var(--dg)">■ NỢ THÊM</span> = khách nợ nhiều hơn · <span style="color:var(--ok)">■ NỢ BỚT</span> = khách nợ ít đi.<br>Bên phải dưới cùng là <b>nợ còn lại ngay sau lần đó</b>. Bấm vào dòng để xem chi tiết.</div><div id="lgb">${lgH(id)}</div>`+
+ ordOf(id)+openInvH(id)+`<div style="border-top:1px solid var(--ln);margin:18px 0 14px"></div><button class="btn p" style="width:100%" onclick="payD('${id}')">Khách trả tiền</button>${d<0?`<button class="btn" style="width:100%;margin-top:8px" onclick="refD('${id}')">Trả tiền lại cho khách (số dư +${money(-d)})</button>`:''}<div style="margin:22px 0 2px;font-size:16px"><b>Sổ giao dịch</b></div><div class="lg-guide">Mỗi dòng = 1 lần <b>mua hàng</b> hoặc <b>trả tiền</b>, mới nhất ở trên.<br><span style="color:var(--dg)">■ NỢ THÊM</span> = khách nợ nhiều hơn · <span style="color:var(--ok)">■ NỢ BỚT</span> = khách nợ ít đi.<br>Bên phải dưới cùng là <b>nợ còn lại ngay sau lần đó</b>. Bấm vào dòng để xem chi tiết.</div><div id="lgb">${lgH(id)}</div>`+
  `<div class="acts"><button class="btn" onclick="closeM()">Đóng</button><a class="btn" style="text-decoration:none" href="tel:${esc(c.phone)}">Gọi</a><button class="btn p" onclick="editC('${id}')">Sửa</button></div>`);
 }
 function delC(id){
@@ -927,7 +928,7 @@ function dpEv(){return (S.deps||[]).map(d=>{const c=cus(d.cid);return {t:d.t,pm:
 function pmEv(){
  const a=[];
  S.sales.forEach(s=>{const v=rcv(s);if(v>0)a.push({t:s.t,pm:s.pm||'Chưa chọn tag',v,lb:'Hóa đơn #'+s.n+(s.cn?' · '+s.cn:''),pn:s.pn||''})});
- (S.pays||[]).forEach(p=>{const c=cus(p.cid);a.push({t:p.t,pm:p.pm||'Chưa chọn tag',v:p.amt,lb:'Khách trả tiền'+(c?' · '+c.name:''),pn:p.pn||''})});
+ (S.pays||[]).forEach(p=>{const c=cus(p.cid);a.push({t:p.t,pm:p.pm||'Chưa chọn tag',v:p.amt,lb:(p.amt<0?'Trả lại tiền khách':'Khách trả tiền')+(c?' · '+c.name:''),pn:p.pn||''})});
  return a.concat(dpEv());
 }
 function pmMonthV(){
@@ -994,6 +995,21 @@ function payD(id,keep){
  const d=Math.round(cdebt(id));
  modal(`<h2>Khách trả tiền · ${esc(cus(id).name)}</h2><div class="mu">${bal(d)}</div><label>Số tiền khách trả (nghìn đồng, 10 = 10.000)</label><input class="in" id="pa" type="number" inputmode="decimal" step="any" value="${keep&&payAmt!==null?payAmt:(d>0?d/1000:'')}" oninput="payAmt=this.value;payUp(${d})"><label>Giảm giá cho khách (nghìn đồng, bỏ phần còn thiếu)</label><input class="in" id="pds" type="number" inputmode="decimal" step="any" value="${keep&&payDs!==null?payDs:''}" oninput="payDs=this.value;payUp(${d})"><div class="mu" id="pn2" style="font-size:13px;margin-top:4px"></div><div id="pprev"></div>${tagBox('p')}<div class="acts"><button class="btn" onclick="cusD('${id}')">Hủy</button><button class="btn p" onclick="savePay('${id}')">Xác nhận thu</button></div>`);
  payUp(d);
+}
+function refUp(d){const a=Math.round((+$('#ra').value||0)*1000);$('#rn').textContent=(a?'Trả lại '+money(a)+'. ':'')+'Sau khi trả: '+bal(d+a)}
+function refPick(i){const t=S.tags[i];ptag=ptag===t?'':t;S.lastTag=ptag;save(true);refD(payId,1)}
+function refD(id,keep){
+ payId=id;if(!keep){payAmt=null;pnote2=''}
+ const d=Math.round(cdebt(id));if(d>=0){toast('Khách không có số dư để trả lại');return}
+ modal(`<h2>Trả tiền lại cho khách · ${esc(cus(id).name)}</h2><div class="mu">${bal(d)}</div><label>Số tiền trả lại khách (nghìn đồng, 10 = 10.000)</label><input class="in" id="ra" type="number" inputmode="decimal" step="any" value="${keep&&payAmt!==null?payAmt:-d/1000}" oninput="payAmt=this.value;refUp(${d})"><div class="mu" id="rn" style="font-size:13px;margin-top:4px"></div><label>Trả bằng (tag)</label><div class="chips" style="flex-wrap:wrap;overflow:visible">${S.tags.map((t,i)=>`<button class="chip ${ptag===t?'on':''}" onclick="refPick(${i})">${esc(t)}</button>`).join('')}</div><input class="in" style="margin-top:8px" placeholder="Ghi chú (tùy chọn)" value="${esc(pnote2)}" oninput="pnote2=this.value"><div class="acts"><button class="btn" onclick="cusD('${id}')">Hủy</button><button class="btn p" onclick="saveRef('${id}')">Xác nhận trả</button></div>`);
+ refUp(d);
+}
+function saveRef(id){
+ const a=Math.round((+$('#ra').value||0)*1000),d=Math.round(cdebt(id));
+ if(!(a>0)){toast('Nhập số tiền trả lại khách');return}
+ if(a>-d){toast('Không thể trả quá số dư của khách');return}
+ S.pays.push({id:uid(),cid:id,t:Date.now(),amt:-a,ds:0,pm:ptag,pn:pnote2,rf:1});
+ save();toast('Đã ghi nhận trả tiền lại cho khách');render();cusD(id);
 }
 function savePay(id){
  const a=Math.round((+$('#pa').value||0)*1000),s=Math.round((+$('#pds').value||0)*1000);
@@ -1356,8 +1372,10 @@ if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.ser
 (function(){
  const B='color:var(--pu);font-weight:600';
  function syncNames(){try{S.products.forEach(p=>{if(p.tg==='om'&&avail(p)<=0)delete p.tg});S.sales.forEach(s=>s.items.forEach(i=>{const p=prod(i.id);if(p&&p.name&&i.name!==p.name)i.name=p.name}));(S.rets||[]).forEach(r=>r.items.forEach(i=>{const p=prod(i.id);if(p&&p.name&&i.name!==p.name)i.name=p.name}))}catch(e){}}
- const _save=save;save=function(k){syncNames();return _save.apply(this,arguments)};
- syncNames();
+ /* Khách đã mua đúng món đã đặt (có hóa đơn) thì tự đóng đơn, bỏ khỏi "Đang đặt order" */
+ function autoDone(){let n=0;try{OR().forEach(o=>{if(oAct(o)&&shSold(o)){const x=S.sales.filter(s=>s.cid===o.cid&&s.t>=o.t&&s.items.some(i=>i.id===o.pid)).sort((a,b)=>a.t-b.t)[0];o.st='done';o.dn=x?x.t:Date.now();n++}})}catch(e){}return n}
+ const _save=save;save=function(k){syncNames();autoDone();return _save.apply(this,arguments)};
+ syncNames();if(autoDone()){save();render()}
  let autoC='';
  const _add=add;
  add=function(id){
