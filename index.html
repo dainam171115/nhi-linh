@@ -192,7 +192,7 @@ const IMG={db:null,saved:{},need:new Set(),busy:0,again:0,
 function imgBoot(){S.products.forEach(p=>{if(p.img==='@idb'){p.img='';IMG.need.add(p.id)}});IMG.fill()}
 function slimJ(){return JSON.stringify(S,function(k,v){if(k==='img'&&this&&this.id){if(v&&IMG.saved[this.id]===v)return '@idb';if(!v&&IMG.need.has(this.id))return '@idb'}return v})}
 function save(k){_sd=null;if(!k)S.mod=Date.now();try{localStorage.setItem('pos_v1',slimJ())}catch(e){toast('Không lưu được dữ liệu. Hãy xem cảnh báo ở đầu trang.')}if(!k)bkSoon();IMG.sync()}
-let _sd=null,tab='sell',q='',cart={},disc=0,paid='0',per='today',cust='',cq='',pimg='',cf='in',rq={},rs=null,rm='cash',ptag=S.lastTag||'',pnote='',pnote2='',payId='',payAmt=null;
+let _sd=null,tab='sell',q='',cart={},disc=0,paid='0',per='today',cust='',cq='',pimg='',cf='in',rq={},rs=null,rm='cash',ptag='',pnote='',pnote2='',payId='',payAmt=null;
 const prod=id=>S.products.find(p=>p.id===id);
 const avail=p=>p.od||p.stock===null||p.stock===undefined?Infinity:p.stock;
 const sub=()=>Object.keys(cart).reduce((a,id)=>a+(prod(id)?prod(id).price*cart[id]:0),0);
@@ -246,7 +246,7 @@ function chg(id,d){const p=prod(id),n=(cart[id]||0)+d;if(d>0&&n>avail(p)){toast(
  if(n<=0)delete cart[id];else cart[id]=n;
  $('#grid').innerHTML=grid();
  if(!cnt()){closeM();bar()}else openCart()}
-function clearCart(){cart={};disc=0;paid='0';cust='';pnote='';ordFrom='';closeM();$('#grid').innerHTML=grid();bar()}
+function clearCart(){cart={};disc=0;paid='0';cust='';pnote='';ptag='';ordFrom='';closeM();$('#grid').innerHTML=grid();bar()}
 function openCart(){
  const ids=Object.keys(cart);if(!ids.length)return;
  modal(`<h2>Giỏ hàng</h2>`+ids.map(id=>{const p=prod(id);return `<div class="row"><div><b>${esc(p.name)}</b><br><small style="color:var(--ok);font-weight:600">${money(p.price)} × ${cart[id]} = ${money(p.price*cart[id])}</small></div><div class="q"><button onclick="chg('${id}',-1)">−</button><b>${cart[id]}</b><button onclick="chg('${id}',1)">+</button></div></div>`}).join('')+
@@ -260,13 +260,14 @@ function openCart(){
 function upd(){const t=total();$('#tt').textContent=money(t);$('#dsp').textContent=disc?'= '+money(disc):'';$('#pdp').textContent=paid===''?'':'= '+money(+paid);$('#pdp').style.color=paid===''?'':'var(--ok)';$('#ch').style.color=paid===''?'':+paid>=t?'var(--ok)':'var(--dg)';$('#ch').textContent=paid===''?'—':+paid>=t?ovTxt(+paid-t):(cust&&cdebt(cust)<0?'Trừ số dư ':'Nợ ')+money(t-paid);bar()}
 function pay(){
  if(paid!==''&&+paid<total()&&!cust){toast('Khách đưa chưa đủ. Chọn khách hàng nếu muốn ghi nợ');return}
+ if((paid===''?total():+paid)>0&&!ptag){toast('Khách có trả tiền: hãy chọn 1 tag nhận tiền');return}
  const items=Object.keys(cart).map(id=>{const p=prod(id);return{id,name:p.name,price:p.price,cost:p.cost||0,qty:cart[id]}});
  S.seq=(S.seq||0)+1;
  const c=cus(cust);const s={id:uid(),n:S.seq,t:Date.now(),items,cid:c?c.id:'',cn:c?c.name:'',cp:c?c.phone:'',pm:ptag,pn:pnote,dep:ordDepSum(items),dp:c?Math.min(Math.max(0,(paid===''?total():+paid)-total()),Math.max(0,cdebt(c.id))):0,disc,total:total(),paid:paid===''?total():+paid};
  items.forEach(i=>{const p=prod(i.id);if(p&&p.stock!=null&&!p.od)p.stock-=i.qty});
  S.sales.push(s);save();
  cart={};disc=0;paid='0';
- ordDoneAll(items);cust='';pnote='';S.lastTag=ptag;showRc(s.id,true);render();
+ ordDoneAll(items);cust='';pnote='';ptag='';showRc(s.id,true);render();
 }
 function rcHtml(s){
  return `<div class="rc" id="rc"><div style="text-align:center"><b>${esc(S.store)}</b><br>${dt(s.t)}<br>Hóa đơn #${s.n} (${nI(s)} món)</div>${s.cn?`<div>Khách: ${esc(s.cn)} - ${esc(s.cp)}</div>`:''}<hr>`+
@@ -991,7 +992,7 @@ function normAll(){
 let payDs=null;
 function payUp(d){const a=Math.round((+$('#pa').value||0)*1000),s=Math.round((+$('#pds').value||0)*1000);$('#pn2').textContent=((a||s)?'Trả '+money(a)+(s?' + giảm '+money(s):'')+'. ':'')+'Sau khi trả: '+bal(d-a-s);const pv=$('#pprev');if(pv)pv.innerHTML=sdPreview(payId,a+s)}
 function payD(id,keep){
- payId=id;if(!keep){payAmt=null;payDs=null;pnote2=''}
+ payId=id;if(!keep){payAmt=null;payDs=null;pnote2='';ptag=''}
  const d=Math.round(cdebt(id));
  modal(`<h2>Khách trả tiền · ${esc(cus(id).name)}</h2><div class="mu">${bal(d)}</div><label>Số tiền khách trả (nghìn đồng, 10 = 10.000)</label><input class="in" id="pa" type="number" inputmode="decimal" step="any" value="${keep&&payAmt!==null?payAmt:(d>0?d/1000:'')}" oninput="payAmt=this.value;payUp(${d})"><label>Giảm giá cho khách (nghìn đồng, bỏ phần còn thiếu)</label><input class="in" id="pds" type="number" inputmode="decimal" step="any" value="${keep&&payDs!==null?payDs:''}" oninput="payDs=this.value;payUp(${d})"><div class="mu" id="pn2" style="font-size:13px;margin-top:4px"></div><div id="pprev"></div>${tagBox('p')}<div class="acts"><button class="btn" onclick="cusD('${id}')">Hủy</button><button class="btn p" onclick="savePay('${id}')">Xác nhận thu</button></div>`);
  payUp(d);
@@ -999,7 +1000,7 @@ function payD(id,keep){
 function refUp(d){const a=Math.round((+$('#ra').value||0)*1000);$('#rn').textContent=(a?'Trả lại '+money(a)+'. ':'')+'Sau khi trả: '+bal(d+a)}
 function refPick(i){const t=S.tags[i];ptag=ptag===t?'':t;S.lastTag=ptag;save(true);refD(payId,1)}
 function refD(id,keep){
- payId=id;if(!keep){payAmt=null;pnote2=''}
+ payId=id;if(!keep){payAmt=null;pnote2='';ptag=''}
  const d=Math.round(cdebt(id));if(d>=0){toast('Khách không có số dư để trả lại');return}
  modal(`<h2>Trả tiền lại cho khách · ${esc(cus(id).name)}</h2><div class="mu">${bal(d)}</div><label>Số tiền trả lại khách (nghìn đồng, 10 = 10.000)</label><input class="in" id="ra" type="number" inputmode="decimal" step="any" value="${keep&&payAmt!==null?payAmt:-d/1000}" oninput="payAmt=this.value;refUp(${d})"><div class="mu" id="rn" style="font-size:13px;margin-top:4px"></div><label>Trả bằng (tag)</label><div class="chips" style="flex-wrap:wrap;overflow:visible">${S.tags.map((t,i)=>`<button class="chip ${ptag===t?'on':''}" onclick="refPick(${i})">${esc(t)}</button>`).join('')}</div><input class="in" style="margin-top:8px" placeholder="Ghi chú (tùy chọn)" value="${esc(pnote2)}" oninput="pnote2=this.value"><div class="acts"><button class="btn" onclick="cusD('${id}')">Hủy</button><button class="btn p" onclick="saveRef('${id}')">Xác nhận trả</button></div>`);
  refUp(d);
@@ -1008,12 +1009,14 @@ function saveRef(id){
  const a=Math.round((+$('#ra').value||0)*1000),d=Math.round(cdebt(id));
  if(!(a>0)){toast('Nhập số tiền trả lại khách');return}
  if(a>-d){toast('Không thể trả quá số dư của khách');return}
+ if(!ptag){toast('Hãy chọn 1 tag tiền đã trả');return}
  S.pays.push({id:uid(),cid:id,t:Date.now(),amt:-a,ds:0,pm:ptag,pn:pnote2,rf:1});
  save();toast('Đã ghi nhận trả tiền lại cho khách');render();cusD(id);
 }
 function savePay(id){
  const a=Math.round((+$('#pa').value||0)*1000),s=Math.round((+$('#pds').value||0)*1000);
  if(!(a>0)&&!(s>0)){toast('Nhập số tiền khách trả hoặc giảm giá');return}
+ if(a>0&&!ptag){toast('Hãy chọn 1 tag nhận tiền');return}
  S.pays.push({id:uid(),cid:id,t:Date.now(),amt:a,ds:s,pm:a>0?ptag:'',pn:pnote2});
  save();toast('Đã ghi nhận');render();cusD(id);
 }
@@ -1363,6 +1366,11 @@ async function chkNew(){try{if(!navigator.onLine||Date.now()-_lastChk<600000)ret
  const t=await(await fetch('index.html',{cache:'no-store'})).text();const m=t.match(/APPV="(v\d+)"/);
  if(m&&m[1]!==APPV&&!window._newV){window._newV=1;render()}}catch(e){}}
 setTimeout(chkNew,3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chkNew()});
+/* Thanh nhắc (sao lưu, đơn quá hạn...) tự cập nhật khi mở lại app và mỗi 10 phút, không cần thao tác */
+function refreshNotice(){try{const h=notice(),v=$('#v'),cur=v&&v.querySelector(':scope > .nt');if(!v)return;if(cur){if(h)cur.outerHTML=h;else cur.remove()}else if(h)v.insertAdjacentHTML('afterbegin',h)}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshNotice()});
+window.addEventListener('pageshow',refreshNotice);
+setInterval(refreshNotice,6e5);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)autoBak()});
 window.addEventListener('pagehide',()=>autoBak());
 render();
